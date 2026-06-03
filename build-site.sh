@@ -18,7 +18,8 @@ cp "$ROOT/landing/index.html" "$ROOT/landing/styles.css" "$ROOT/landing/site.js"
 
 # The web app under /app
 cp "$ROOT/frontend/index.html" "$ROOT/frontend/app.js" \
-   "$ROOT/frontend/crypto.js" "$ROOT/frontend/styles.css" "$DIST/app/"
+   "$ROOT/frontend/crypto.js" "$ROOT/frontend/argon2.js" \
+   "$ROOT/frontend/styles.css" "$DIST/app/"
 
 # Site-wide security headers (strict CSP, connect-src 'none')
 cp "$ROOT/frontend/_headers" "$DIST/_headers"

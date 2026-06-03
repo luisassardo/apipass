@@ -49,6 +49,10 @@
       <p class="hint" data-i18n="create_hint">Crea una bóveda nueva y vacía. Elige una contraseña maestra fuerte: es la única forma de abrir el archivo, y no se puede recuperar.</p>
       <label class="field-label" data-i18n="master_password">Contraseña maestra</label>
       <input type="password" id="create-password" class="text-input" autocomplete="off" spellcheck="false">
+      <div id="pw-strength" class="pw-strength hidden">
+        <div class="pw-bar"><div id="pw-bar-fill"></div></div>
+        <span id="pw-strength-label"></span>
+      </div>
       <label class="field-label" data-i18n="confirm_password">Confirmar contraseña</label>
       <input type="password" id="create-password2" class="text-input" autocomplete="off" spellcheck="false">
       <button id="create-btn" class="btn btn-primary" disabled data-i18n="create_open">Crear y abrir</button>
@@ -120,6 +124,7 @@
   </p>
 </footer>
 
+<script src="argon2.js"></script>
 <script src="crypto.js"></script>
 <script src="app.js"></script>
 </body>

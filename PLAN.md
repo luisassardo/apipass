@@ -41,7 +41,7 @@ and dashboards), so the UX is built around *organize → unlock → find → cop
 | Keys lingering in memory while unlocked | ⚠️ mitigated | Auto-lock on idle + tab blur; explicit Lock button. |
 | Shoulder surfing | ⚠️ mitigated | Secrets masked by default, reveal is per-entry and momentary. |
 
-## Crypto (v0.1)
+## Crypto
 
 Vault file is a single JSON **envelope** — versioned so the KDF can be upgraded
 without breaking old vaults:
@@ -49,12 +49,14 @@ without breaking old vaults:
 ```json
 {
   "format": "api-pass-vault",
-  "version": 1,
-  "kdf":    { "algo": "PBKDF2-SHA256", "iterations": 600000, "salt": "<base64>" },
+  "version": 2,
+  "kdf":    { "algo": "argon2id", "m": 65536, "t": 2, "p": 1, "salt": "<base64>" },
   "cipher": { "algo": "AES-256-GCM", "iv": "<base64>" },
   "ciphertext": "<base64>"
 }
 ```
+
+> Version 1 vaults (`kdf.algo: "PBKDF2-SHA256"`, 600k iters) still decrypt.
 
 Plaintext (encrypted as the `ciphertext`) is the vault object:
 
@@ -68,11 +70,17 @@ Plaintext (encrypted as the `ciphertext`) is the vault object:
 }
 ```
 
-- **KDF:** PBKDF2-HMAC-SHA256, 600k iterations (OWASP-acceptable, native WebCrypto,
-  zero dependencies). **v0.2 upgrade path:** add `kdf.algo == "argon2id"` (vendored,
-  auditable WASM — never a CDN). The `version`/`kdf` fields make this a clean migration.
+- **KDF (v0.2, current): Argon2id**, `m=65536` KiB (64 MiB), `t=2`, `p=1`, 32-byte key.
+  Memory-hard → far stronger than PBKDF2 if a vault file is stolen. Vendored pure-JS from
+  `@noble/hashes` (audited), bundled to `frontend/argon2.js` (~13 KB, no WASM, no CDN, no
+  CSP change). ~1s per unlock in-browser. Params stored per-vault so they can be tuned
+  later without breaking files.
+  - **Backward compatibility:** vaults written with the old `kdf.algo == "PBKDF2-SHA256"`
+    (version 1, 600k iters) still decrypt. New vaults are version 2 / Argon2id.
 - **Cipher:** AES-256-GCM, fresh 12-byte IV per save, 16-byte auth tag.
 - **Randomness:** `crypto.getRandomValues` for salt and IV.
+- **Password strength meter** on vault creation: heuristic estimate (pool size + length,
+  penalties for low diversity / repeats / common patterns) → Weak/Fair/Good/Strong.
 
 ## Entry model (API-key shaped, not password shaped)
 

@@ -1,0 +1,17 @@
+{
+  "name": "apipass",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Encrypted vault for API keys — web + signed macOS app. Part of C-LAB.",
+  "license": "MIT",
+  "scripts": {
+    "tauri": "tauri",
+    "build:argon2": "esbuild build/argon2-entry.mjs --bundle --format=iife --global-name=ApiPassArgon2 --minify --legal-comments=inline --banner:js=\"/* ApiPass: argon2id vendored from @noble/hashes (MIT). Regenerate: npm run build:argon2 */\" --outfile=frontend/argon2.js",
+    "build:site": "bash build-site.sh"
+  },
+  "devDependencies": {
+    "@noble/hashes": "^2.2.0",
+    "@tauri-apps/cli": "^2.11.2",
+    "esbuild": "^0.28.0"
+  }
+}

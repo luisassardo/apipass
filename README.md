@@ -26,7 +26,7 @@ Los gestores de secretos en la nube (Doppler, Infisical, 1Password) obligan a co
 
 | Amenaza | ¿Cubierta? |
 |---|---|
-| Te roban el archivo de bóveda en reposo | ✅ AES-256-GCM; la clave se deriva de tu contraseña maestra con PBKDF2 (600 000 iteraciones). |
+| Te roban el archivo de bóveda en reposo | ✅ AES-256-GCM; la clave se deriva de tu contraseña maestra con **Argon2id** (resistente a memoria, 64 MiB) — vaults antiguos con PBKDF2 siguen abriéndose. |
 | Manipulan el archivo de bóveda | ✅ El sello de autenticación de GCM falla → descifrado rechazado. |
 | Contraseña maestra débil / fuerza bruta offline | ⚠️ El KDF la ralentiza, pero una contraseña débil sigue siendo débil. Usa una larga. |
 | Dispositivo comprometido (malware, keylogger, extensión maliciosa) | ❌ **Fuera de alcance.** Ninguna app web puede protegerte si el endpoint está comprometido. |

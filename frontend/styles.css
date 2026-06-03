@@ -196,6 +196,34 @@ textarea.text-input { resize: vertical; }
 .file-pick { margin-top: 0.3rem; }
 .file-pick.has-file { border-color: var(--ok); color: var(--ok); }
 
+/* password strength meter (create panel) */
+.pw-strength {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+.pw-bar {
+  flex: 1;
+  height: 5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+#pw-bar-fill {
+  height: 100%;
+  width: 0;
+  background: var(--err);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+#pw-strength-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  min-width: 8ch;
+  text-align: right;
+}
+
 /* ---------- vault toolbar ---------- */
 .vault-toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
 .vault-toolbar .search { flex: 1; }

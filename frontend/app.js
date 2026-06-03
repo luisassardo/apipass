@@ -68,7 +68,14 @@
       confirm_del: '¿Eliminar esta key de la bóveda?',
       confirm_discard: 'Tienes cambios sin guardar. ¿Bloquear y descartarlos?',
       clip_cleared: 'Portapapeles borrado.',
-      save_failed: 'No se pudo guardar la bóveda:'
+      save_failed: 'No se pudo guardar la bóveda:',
+      unlocking: 'Descifrando…',
+      saving: 'Cifrando…',
+      err_argon2: 'No se pudo cargar el componente de cifrado (argon2).',
+      pw_weak: 'Débil',
+      pw_fair: 'Aceptable',
+      pw_good: 'Buena',
+      pw_strong: 'Fuerte'
     },
     en: {
       title: 'ApiPass',
@@ -122,13 +129,20 @@
       confirm_del: 'Delete this key from the vault?',
       confirm_discard: 'You have unsaved changes. Lock and discard them?',
       clip_cleared: 'Clipboard cleared.',
-      save_failed: 'Could not save the vault:'
+      save_failed: 'Could not save the vault:',
+      unlocking: 'Decrypting…',
+      saving: 'Encrypting…',
+      err_argon2: 'Could not load the encryption component (argon2).',
+      pw_weak: 'Weak',
+      pw_fair: 'Fair',
+      pw_good: 'Good',
+      pw_strong: 'Strong'
     }
   };
 
   const ABOUT_HTML = {
     es: `
-      <p>ApiPass guarda tus API keys en un único archivo <strong>cifrado</strong> (AES-256-GCM). La clave de cifrado se deriva de tu contraseña maestra con PBKDF2 (600 000 iteraciones). Todo ocurre en tu navegador: no hay servidor, no hay subida, no hay telemetría.</p>
+      <p>ApiPass guarda tus API keys en un único archivo <strong>cifrado</strong> (AES-256-GCM). La clave de cifrado se deriva de tu contraseña maestra con <strong>Argon2id</strong> (función resistente a memoria, 64 MiB). Todo ocurre en tu navegador: no hay servidor, no hay subida, no hay telemetría.</p>
       <p><strong>Qué protege:</strong> si alguien obtiene tu archivo de bóveda, no puede leer las keys sin tu contraseña maestra. Si manipula el archivo, el descifrado falla.</p>
       <p class="danger"><strong>Qué NO protege:</strong> si tu dispositivo está comprometido (malware, keylogger, extensión maliciosa del navegador), nada puede proteger las keys mientras la bóveda está abierta. Ninguna app web puede. Mientras está desbloqueada, las keys viven en la memoria del navegador.</p>
       <ul>
@@ -139,7 +153,7 @@
       </ul>
     `,
     en: `
-      <p>ApiPass stores your API keys in a single <strong>encrypted</strong> file (AES-256-GCM). The encryption key is derived from your master password with PBKDF2 (600,000 iterations). Everything runs in your browser: no server, no upload, no telemetry.</p>
+      <p>ApiPass stores your API keys in a single <strong>encrypted</strong> file (AES-256-GCM). The encryption key is derived from your master password with <strong>Argon2id</strong> (a memory-hard function, 64 MiB). Everything runs in your browser: no server, no upload, no telemetry.</p>
       <p><strong>What it protects:</strong> if someone gets your vault file, they cannot read the keys without your master password. If they tamper with the file, decryption fails.</p>
       <p class="danger"><strong>What it does NOT protect:</strong> if your device is compromised (malware, keylogger, malicious browser extension), nothing can protect the keys while the vault is open. No web app can. While unlocked, the keys live in browser memory.</p>
       <ul>
@@ -201,6 +215,55 @@
   function setDirty(v) {
     dirty = v;
     $('#dirty-bar').classList.toggle('hidden', !v);
+  }
+
+  // Button busy state for the ~1s Argon2id hash (decrypt/encrypt). Updates the
+  // label's text (the button keeps its data-i18n span) and disables it.
+  function btnLabelEl(btn) { return btn.querySelector('[data-i18n]') || btn; }
+  function setBtnBusy(btn, label) {
+    btn.disabled = true;
+    btn.dataset.busy = '1';
+    btnLabelEl(btn).textContent = label;
+  }
+  function clearBtnBusy(btn, i18nKey) {
+    delete btn.dataset.busy;
+    btn.disabled = false;
+    btnLabelEl(btn).textContent = t(i18nKey);
+  }
+
+  // ---------- password strength (heuristic estimate; honest, not zxcvbn) ----------
+  // Returns { score: 1..4, bits } from length, character-pool size, and simple
+  // penalties for low diversity, repeats, and common patterns.
+  function estimateStrength(pw) {
+    if (!pw) return { score: 0, bits: 0 };
+    let pool = 0;
+    if (/[a-z]/.test(pw)) pool += 26;
+    if (/[A-Z]/.test(pw)) pool += 26;
+    if (/[0-9]/.test(pw)) pool += 10;
+    if (/[^a-zA-Z0-9]/.test(pw)) pool += 33;
+    let bits = pw.length * Math.log2(pool || 1);
+    if (new Set(pw.toLowerCase()).size <= 4) bits *= 0.5;   // very few distinct chars
+    if (/(.)\1{2,}/.test(pw)) bits *= 0.7;                  // 3+ repeated chars
+    if (/password|qwerty|1234|abcd|admin|letmein|contrase/i.test(pw)) bits = Math.min(bits, 20);
+    let score = 1;
+    if (bits >= 40) score = 2;
+    if (bits >= 60) score = 3;
+    if (bits >= 80) score = 4;
+    return { score: score, bits: bits };
+  }
+
+  function updateStrengthMeter() {
+    const pw = $('#create-password').value;
+    const box = $('#pw-strength');
+    if (!pw) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    const { score } = estimateStrength(pw);
+    const colors = { 1: 'var(--err)', 2: 'var(--warn)', 3: 'var(--accent)', 4: 'var(--ok)' };
+    const labels = { 1: 'pw_weak', 2: 'pw_fair', 3: 'pw_good', 4: 'pw_strong' };
+    $('#pw-bar-fill').style.width = (score * 25) + '%';
+    $('#pw-bar-fill').style.background = colors[score];
+    $('#pw-strength-label').textContent = t(labels[score]);
+    $('#pw-strength-label').style.color = colors[score];
   }
 
   // ---------- lock-screen tabs ----------
@@ -285,15 +348,20 @@
     $('#open-error').textContent = '';
     if (!pendingEnvelope) { $('#open-error').textContent = t('err_no_file'); return; }
     if (!pw) { $('#open-error').textContent = t('err_no_pw'); return; }
+    const btn = $('#open-btn');
+    setBtnBusy(btn, t('unlocking'));
     try {
       const obj = await CRYPTO.decryptVault(pendingEnvelope, pw);
       vault = normalizeVault(obj);
       masterPassword = pw;
+      clearBtnBusy(btn, 'unlock');
       enterVault();
     } catch (e) {
+      clearBtnBusy(btn, 'unlock');
       const map = {
         BAD_FORMAT: 'err_bad_format',
         UNSUPPORTED: 'err_unsupported',
+        ARGON2_UNAVAILABLE: 'err_argon2',
         WRONG_PASSWORD_OR_CORRUPT: 'err_wrong_pw'
       };
       $('#open-error').textContent = t(map[e.message] || 'err_wrong_pw');
@@ -311,7 +379,7 @@
   function refreshCreateBtn() {
     $('#create-btn').disabled = !($('#create-password').value && $('#create-password2').value);
   }
-  $('#create-password').addEventListener('input', refreshCreateBtn);
+  $('#create-password').addEventListener('input', () => { refreshCreateBtn(); updateStrengthMeter(); });
   $('#create-password2').addEventListener('input', refreshCreateBtn);
   $('#create-btn').addEventListener('click', createVault);
 
@@ -574,42 +642,46 @@
   // ---------- save (encrypt, then write or download) ----------
   $('#save-btn').addEventListener('click', saveVault);
   async function saveVault() {
-    vault.meta.modified = nowISO();
-    const envelope = await CRYPTO.encryptVault(vault, masterPassword);
-    const text = JSON.stringify(envelope, null, 2);
+    const btn = $('#save-btn');
+    setBtnBusy(btn, t('saving'));
+    try {
+      vault.meta.modified = nowISO();
+      const envelope = await CRYPTO.encryptVault(vault, masterPassword);
+      const text = JSON.stringify(envelope, null, 2);
 
-    if (IS_TAURI) {
-      // Desktop: write the real file in place. First save of a new vault asks
-      // for a path; later saves overwrite it silently.
-      try {
+      if (IS_TAURI) {
+        // Desktop: write the real file in place. First save of a new vault asks
+        // for a path; later saves overwrite it silently.
         let path = currentVaultPath;
         if (!path) {
           path = await TAURI.dialog.save({
             defaultPath: 'vault.apikeys',
             filters: [{ name: 'api-pass vault', extensions: ['apikeys'] }]
           });
-          if (!path) return; // cancelled — keep dirty
+          if (!path) return; // cancelled — keep dirty (finally clears busy)
         }
         await TAURI.core.invoke('write_vault', { path: path, contents: text });
         currentVaultPath = path;
         setDirty(false);
-      } catch (err) {
-        window.alert(t('save_failed') + ' ' + err);
+        return;
       }
-      return;
-    }
 
-    // Web: download a fresh file the user re-saves over their copy.
-    const blob = new Blob([text], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'vault.apikeys';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setDirty(false);
+      // Web: download a fresh file the user re-saves over their copy.
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'vault.apikeys';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setDirty(false);
+    } catch (err) {
+      window.alert(t('save_failed') + ' ' + (err && err.message ? err.message : err));
+    } finally {
+      clearBtnBusy(btn, 'save_download');
+    }
   }
 
   // warn on tab close with unsaved changes
