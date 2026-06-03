@@ -9,6 +9,9 @@ node_modules/
 src-tauri/target/
 src-tauri/gen/
 
+# Assembled Cloudflare Pages output
+dist/
+
 # signing / notarization secrets — never commit
 .env
 *.p12

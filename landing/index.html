@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>ApiPass — bóveda cifrada para tus API keys</title>
+<meta name="description" content="Bóveda cifrada para API keys, 100% offline. App firmada para macOS o úsala en el navegador. Parte de C-LAB.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="/">ApiPass</a>
+  <nav>
+    <a href="#features" data-i18n="nav_features">Características</a>
+    <a href="#security" data-i18n="nav_security">Seguridad</a>
+    <a href="https://github.com/luisassardo/apipass" rel="noopener">GitHub</a>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-lang="es" class="active">ES</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="kicker"><span class="dot">●</span> <a href="https://c-lab.tools/" rel="noopener">C-LAB</a></p>
+    <h1 data-i18n="hero_title">Tus API keys, cifradas y bajo tu control.</h1>
+    <p class="lead" data-i18n="hero_lead">Una bóveda cifrada para guardar y organizar tus API keys. Funciona 100% en tu dispositivo: sin servidor, sin telemetría, sin nube. Inspirada en KeePassXC, pensada para periodistas y defensores de derechos humanos.</p>
+    <div class="cta-row">
+      <a id="download-btn" class="btn btn-primary" href="https://github.com/luisassardo/apipass/releases/latest/download/ApiPass-macOS-arm64.dmg">
+        <span data-i18n="cta_download">Descargar para macOS</span>
+      </a>
+      <a class="btn" href="/app/" data-i18n="cta_browser">Usar en el navegador</a>
+    </div>
+    <p class="hero-note">
+      <span data-i18n="hero_note">macOS Apple Silicon · firmada y notarizada por Apple · gratis y de código abierto</span>
+      ·
+      <a href="https://github.com/luisassardo/apipass/releases/latest" rel="noopener" data-i18n="all_downloads">todas las descargas</a>
+    </p>
+  </section>
+
+  <section id="features" class="features">
+    <h2 data-i18n="features_title">Por qué ApiPass</h2>
+    <div class="grid">
+      <div class="card">
+        <h3 data-i18n="f1_t">Cifrado y offline</h3>
+        <p data-i18n="f1_d">AES-256-GCM con clave derivada de tu contraseña maestra (PBKDF2). El archivo de bóveda nunca sale de tu dispositivo.</p>
+      </div>
+      <div class="card">
+        <h3 data-i18n="f2_t">Organizado para API keys</h3>
+        <p data-i18n="f2_d">Agrupa por servicio, proyecto y entorno (dev / staging / prod). Busca al instante. Recordatorio de rotación.</p>
+      </div>
+      <div class="card">
+        <h3 data-i18n="f3_t">Copia con cuenta atrás</h3>
+        <p data-i18n="f3_d">Al estilo KeePassXC: la copia al portapapeles se borra automáticamente tras unos segundos.</p>
+      </div>
+      <div class="card">
+        <h3 data-i18n="f4_t">App firmada y notarizada</h3>
+        <p data-i18n="f4_d">La app de macOS está firmada con Developer ID y notarizada por Apple: se abre sin avisos de "desarrollador no identificado".</p>
+      </div>
+      <div class="card">
+        <h3 data-i18n="f5_t">Web o escritorio</h3>
+        <p data-i18n="f5_d">El mismo código corre en el navegador o como app nativa. En escritorio abre y guarda el archivo real en su sitio.</p>
+      </div>
+      <div class="card">
+        <h3 data-i18n="f6_t">Auditable</h3>
+        <p data-i18n="f6_d">Código abierto, sin frameworks ni CDN externos. Verifica cada descarga con su hash SHA-256 publicado.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="security" class="security">
+    <h2 data-i18n="sec_title">Honestos sobre qué protege (y qué no)</h2>
+    <div class="sec-cols">
+      <div class="sec-ok">
+        <h3 data-i18n="sec_ok_t">✓ Qué protege</h3>
+        <ul>
+          <li data-i18n="sec_ok_1">Si alguien obtiene tu archivo de bóveda, no puede leer las keys sin tu contraseña maestra.</li>
+          <li data-i18n="sec_ok_2">Si manipulan el archivo, el descifrado falla (no se abre silenciosamente alterado).</li>
+          <li data-i18n="sec_ok_3">Nada se transmite por la red: puedes usarlo sin conexión.</li>
+        </ul>
+      </div>
+      <div class="sec-no">
+        <h3 data-i18n="sec_no_t">✗ Qué NO protege</h3>
+        <ul>
+          <li data-i18n="sec_no_1">Un dispositivo comprometido (malware, keylogger, extensión maliciosa) puede leer las keys mientras la bóveda está abierta. Ninguna app puede evitar esto.</li>
+          <li data-i18n="sec_no_2">Una contraseña maestra débil es vulnerable a fuerza bruta. Usa una larga.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="verify">
+      <span data-i18n="verify">Verifica tu descarga:</span>
+      <code>shasum -a 256 ApiPass_0.1.0_aarch64.dmg</code>
+      <a href="https://github.com/luisassardo/apipass/releases/latest" rel="noopener" data-i18n="verify_link">y compara con SHA256SUMS.txt</a>
+    </p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>
+    <span data-i18n="footer">Esta herramienta es parte de</span>
+    <a href="https://c-lab.tools/" rel="noopener" class="clab">C-LAB</a> ·
+    <span data-i18n="for_audience">Creada para periodistas y defensores de derechos humanos</span>
+  </p>
+  <p class="foot-links">
+    <a href="https://github.com/luisassardo/apipass" rel="noopener">GitHub</a> ·
+    <a href="/app/" data-i18n="cta_browser">Usar en el navegador</a>
+  </p>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>
