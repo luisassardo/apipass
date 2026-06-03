@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+.vscode/
+.idea/
+*.log
+*.apikeys
+
+# Tauri / Rust build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# signing / notarization secrets — never commit
+.env
+*.p12
+*.cer

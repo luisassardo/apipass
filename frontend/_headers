@@ -1,0 +1,8 @@
+/*
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'
+  Permissions-Policy: interest-cohort=(), geolocation=(), camera=(), microphone=(), clipboard-read=(self), clipboard-write=(self)
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin

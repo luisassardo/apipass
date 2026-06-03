@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>ApiPass — bóveda local de API keys</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1 data-i18n="title">ApiPass</h1>
+    <p class="subtitle" data-i18n="subtitle">Tus API keys, cifradas y organizadas. Nunca salen de tu dispositivo.</p>
+  </div>
+  <div class="header-right">
+    <button type="button" id="lock-btn" class="btn lock-btn hidden" data-i18n="lock">Bloquear</button>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-lang="es" class="active">ES</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ LOCK SCREEN ============ -->
+  <section id="lock-screen" class="lock-screen">
+    <div class="lock-tabs" role="tablist">
+      <button type="button" id="tab-open" class="lock-tab active" data-i18n="open_vault">Abrir bóveda</button>
+      <button type="button" id="tab-create" class="lock-tab" data-i18n="create_vault">Crear bóveda</button>
+    </div>
+
+    <!-- Open existing vault -->
+    <div id="panel-open" class="lock-panel">
+      <label class="field-label" data-i18n="vault_file">Archivo de bóveda (.apikeys)</label>
+      <label class="btn file-pick">
+        <span id="open-filename" data-i18n="choose_vault">Elegir archivo…</span>
+        <input type="file" id="vault-file-input" accept=".apikeys,application/json" hidden>
+      </label>
+      <label class="field-label" data-i18n="master_password">Contraseña maestra</label>
+      <input type="password" id="open-password" class="text-input" autocomplete="off" spellcheck="false">
+      <button id="open-btn" class="btn btn-primary" disabled data-i18n="unlock">Desbloquear</button>
+      <p id="open-error" class="form-error"></p>
+    </div>
+
+    <!-- Create new vault -->
+    <div id="panel-create" class="lock-panel hidden">
+      <p class="hint" data-i18n="create_hint">Crea una bóveda nueva y vacía. Elige una contraseña maestra fuerte: es la única forma de abrir el archivo, y no se puede recuperar.</p>
+      <label class="field-label" data-i18n="master_password">Contraseña maestra</label>
+      <input type="password" id="create-password" class="text-input" autocomplete="off" spellcheck="false">
+      <label class="field-label" data-i18n="confirm_password">Confirmar contraseña</label>
+      <input type="password" id="create-password2" class="text-input" autocomplete="off" spellcheck="false">
+      <button id="create-btn" class="btn btn-primary" disabled data-i18n="create_open">Crear y abrir</button>
+      <p id="create-error" class="form-error"></p>
+    </div>
+
+    <details class="about">
+      <summary data-i18n="about_summary">¿Cómo funciona y qué protege (y qué no)?</summary>
+      <div data-i18n="about_body"></div>
+    </details>
+  </section>
+
+  <!-- ============ VAULT (unlocked) ============ -->
+  <section id="vault-screen" class="vault-screen hidden">
+    <div class="vault-toolbar">
+      <input type="search" id="search" class="text-input search" autocomplete="off" spellcheck="false" data-i18n-ph="search_ph" placeholder="Buscar por servicio, proyecto, entorno…">
+      <button id="add-btn" class="btn btn-primary" data-i18n="add_key">+ Añadir key</button>
+    </div>
+
+    <div id="dirty-bar" class="dirty-bar hidden">
+      <span data-i18n="unsaved">Cambios sin guardar.</span>
+      <button id="save-btn" class="btn btn-primary btn-sm" data-i18n="save_download">Guardar (descargar bóveda)</button>
+    </div>
+
+    <div id="entries"></div>
+    <p id="empty-state" class="empty-state hidden" data-i18n="empty">Esta bóveda no tiene keys todavía. Pulsa “Añadir key”.</p>
+  </section>
+</main>
+
+<!-- ============ ENTRY EDITOR (modal) ============ -->
+<div id="editor-overlay" class="overlay hidden">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2 id="editor-title" data-i18n="add_key">Añadir key</h2>
+    <label class="field-label" data-i18n="f_service">Servicio</label>
+    <input type="text" id="f-service" class="text-input" autocomplete="off" spellcheck="false" placeholder="OpenAI, Stripe, AWS…">
+    <label class="field-label" data-i18n="f_label">Etiqueta</label>
+    <input type="text" id="f-label" class="text-input" autocomplete="off" spellcheck="false" data-i18n-ph="f_label_ph" placeholder="ej: cuenta personal, proyecto X">
+    <label class="field-label" data-i18n="f_secret">Key / secret</label>
+    <textarea id="f-secret" class="text-input mono" rows="3" autocomplete="off" spellcheck="false"></textarea>
+    <div class="field-row">
+      <div class="field-col">
+        <label class="field-label" data-i18n="f_env">Entorno</label>
+        <select id="f-env" class="text-input">
+          <option value="">—</option>
+          <option value="dev">dev</option>
+          <option value="staging">staging</option>
+          <option value="prod">prod</option>
+        </select>
+      </div>
+      <div class="field-col">
+        <label class="field-label" data-i18n="f_project">Proyecto</label>
+        <input type="text" id="f-project" class="text-input" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <label class="field-label" data-i18n="f_notes">Notas</label>
+    <textarea id="f-notes" class="text-input" rows="2" autocomplete="off" data-i18n-ph="f_notes_ph" placeholder="alcance, política de rotación, dónde se usa…"></textarea>
+    <div class="modal-actions">
+      <button id="editor-cancel" class="btn" data-i18n="cancel">Cancelar</button>
+      <button id="editor-save" class="btn btn-primary" data-i18n="save_entry">Guardar key</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>
+    <span data-i18n="footer">Esta herramienta es parte de</span>
+    <a id="clab-link" href="https://c-lab.tools/" rel="noopener" target="_blank">C-LAB</a> ·
+    <span data-i18n="for_audience">Creada para periodistas y defensores de derechos humanos</span>
+  </p>
+</footer>
+
+<script src="crypto.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
