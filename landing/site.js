@@ -14,7 +14,7 @@
       all_downloads: 'todas las descargas',
       features_title: 'Por qué ApiPass',
       f1_t: 'Cifrado y offline',
-      f1_d: 'AES-256-GCM con clave derivada de tu contraseña maestra (PBKDF2). El archivo de bóveda nunca sale de tu dispositivo.',
+      f1_d: 'AES-256-GCM con clave derivada de tu contraseña maestra con Argon2id (resistente a memoria). El archivo de bóveda nunca sale de tu dispositivo.',
       f2_t: 'Organizado para API keys',
       f2_d: 'Agrupa por servicio, proyecto y entorno (dev / staging / prod). Busca al instante. Recordatorio de rotación.',
       f3_t: 'Copia con cuenta atrás',
@@ -36,7 +36,7 @@
       verify: 'Verifica tu descarga:',
       verify_link: 'y compara con SHA256SUMS.txt',
       footer: 'Esta herramienta es parte de',
-      for_audience: 'Creada para periodistas y defensores de derechos humanos'
+      for_audience: 'Creada para periodistas y defensores de derechos humanos.'
     },
     en: {
       nav_features: 'Features',
@@ -49,7 +49,7 @@
       all_downloads: 'all downloads',
       features_title: 'Why ApiPass',
       f1_t: 'Encrypted and offline',
-      f1_d: 'AES-256-GCM with a key derived from your master password (PBKDF2). The vault file never leaves your device.',
+      f1_d: 'AES-256-GCM with a key derived from your master password using Argon2id (memory-hard). The vault file never leaves your device.',
       f2_t: 'Built for API keys',
       f2_d: 'Group by service, project and environment (dev / staging / prod). Instant search. Rotation reminders.',
       f3_t: 'Copy with a countdown',
@@ -71,7 +71,7 @@
       verify: 'Verify your download:',
       verify_link: 'and compare against SHA256SUMS.txt',
       footer: 'This tool is part of',
-      for_audience: 'Created for journalists and human rights defenders'
+      for_audience: 'Created for journalists and human rights defenders.'
     }
   };
 
