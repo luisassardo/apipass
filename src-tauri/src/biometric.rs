@@ -1,156 +1,70 @@
-// Touch ID / biometric unlock for macOS (desktop only).
+// Touch ID unlock for macOS (desktop only) — Developer-ID-friendly approach.
 //
-// The vault's master password is stored in the macOS Keychain under an access
-// control that requires user presence (Touch ID, or the login password as the
-// OS-enforced fallback) to READ. The item is device-only and never syncs.
-// Each vault file gets its own entry, keyed by its path.
+// macOS's biometric-gated *keychain ACL* (data protection keychain) needs a
+// provisioning-profile entitlement a Developer ID app can't carry. So instead:
+//   - the master password is stored in the normal login Keychain (via `keyring`),
+//   - reads are gated by a Touch ID / login-password prompt (via `robius`).
 //
-// Crypto stays in the webview (JS); this module only guards the stored password.
+// The OS doesn't ACL-lock the item to biometrics, so the protection is an
+// app-level gate, not OS-enforced-at-rest. Honest tradeoff for this distribution
+// type; the password is still in the Keychain, never plaintext on disk.
+//
+// One entry per vault file, keyed by its path. Crypto stays in the webview (JS).
 
 #![cfg(target_os = "macos")]
 
-use core_foundation::base::{CFType, TCFType, CFTypeRef};
-use core_foundation::boolean::CFBoolean;
-use core_foundation::data::CFData;
-use core_foundation::dictionary::CFDictionary;
-use core_foundation::string::{CFString, CFStringRef};
-use std::os::raw::c_void;
-use std::ptr;
-
-type SecAccessControlRef = *const c_void;
-type CFErrorRef = *const c_void;
-type CFAllocatorRef = *const c_void;
-type OSStatus = i32;
-type CFOptionFlags = usize;
+use keyring::{Entry, Error as KeyringError};
+use robius_authentication::{
+    AndroidText, BiometricStrength, Context, Policy, PolicyBuilder, Text, WindowsText,
+};
 
 const SERVICE: &str = "ApiPass";
-const K_SEC_ACCESS_CONTROL_USER_PRESENCE: CFOptionFlags = 1 << 0; // Touch ID or passcode
-const ERR_SEC_SUCCESS: OSStatus = 0;
-const ERR_SEC_ITEM_NOT_FOUND: OSStatus = -25300;
-const ERR_SEC_USER_CANCELED: OSStatus = -128;
 
-#[link(name = "Security", kind = "framework")]
-extern "C" {
-    static kSecClass: CFStringRef;
-    static kSecClassGenericPassword: CFStringRef;
-    static kSecAttrService: CFStringRef;
-    static kSecAttrAccount: CFStringRef;
-    static kSecValueData: CFStringRef;
-    static kSecAttrAccessControl: CFStringRef;
-    static kSecReturnData: CFStringRef;
-    static kSecMatchLimit: CFStringRef;
-    static kSecMatchLimitOne: CFStringRef;
-    static kSecUseOperationPrompt: CFStringRef;
-    static kSecAttrAccessibleWhenUnlockedThisDeviceOnly: CFStringRef;
-    static kSecUseDataProtectionKeychain: CFStringRef;
-
-    fn SecAccessControlCreateWithFlags(
-        allocator: CFAllocatorRef,
-        protection: CFTypeRef,
-        flags: CFOptionFlags,
-        error: *mut CFErrorRef,
-    ) -> SecAccessControlRef;
-    fn SecItemAdd(attributes: CFTypeRef, result: *mut CFTypeRef) -> OSStatus;
-    fn SecItemCopyMatching(query: CFTypeRef, result: *mut CFTypeRef) -> OSStatus;
-    fn SecItemDelete(query: CFTypeRef) -> OSStatus;
+fn entry(account: &str) -> Result<Entry, String> {
+    Entry::new(SERVICE, account).map_err(|e| e.to_string())
 }
 
-// Wrap a +0 (get-rule) static CFStringRef constant as a CFString we can use.
-fn key(s: CFStringRef) -> CFString {
-    unsafe { CFString::wrap_under_get_rule(s) }
-}
-
-fn base_pairs(account: &str) -> Vec<(CFString, CFType)> {
-    unsafe {
-        vec![
-            (key(kSecClass), key(kSecClassGenericPassword).as_CFType()),
-            (key(kSecAttrService), CFString::new(SERVICE).as_CFType()),
-            (key(kSecAttrAccount), CFString::new(account).as_CFType()),
-        ]
-    }
-}
-
-fn delete_internal(account: &str) -> OSStatus {
-    let dict = CFDictionary::from_CFType_pairs(&base_pairs(account));
-    unsafe { SecItemDelete(dict.as_CFTypeRef()) }
-}
-
-/// Store (or replace) the master password for `account` (the vault path),
-/// gated by Touch ID / user presence.
+/// Store (or replace) the master password for `account` (the vault path).
 #[tauri::command]
 pub fn biometric_store(account: String, secret: String) -> Result<(), String> {
-    // Replace any prior entry for this vault.
-    let _ = delete_internal(&account);
-
-    let mut err: CFErrorRef = ptr::null();
-    let ac = unsafe {
-        SecAccessControlCreateWithFlags(
-            ptr::null(),
-            key(kSecAttrAccessibleWhenUnlockedThisDeviceOnly).as_CFTypeRef(),
-            K_SEC_ACCESS_CONTROL_USER_PRESENCE,
-            &mut err,
-        )
-    };
-    if ac.is_null() {
-        return Err("could not create access control".into());
-    }
-    let ac_cf: CFType = unsafe { CFType::wrap_under_create_rule(ac as CFTypeRef) };
-
-    let mut pairs = base_pairs(&account);
-    unsafe {
-        pairs.push((key(kSecValueData), CFData::from_buffer(secret.as_bytes()).as_CFType()));
-        pairs.push((key(kSecAttrAccessControl), ac_cf));
-        pairs.push((key(kSecUseDataProtectionKeychain), CFBoolean::true_value().as_CFType()));
-    }
-    let dict = CFDictionary::from_CFType_pairs(&pairs);
-    let status = unsafe { SecItemAdd(dict.as_CFTypeRef(), ptr::null_mut()) };
-    if status == ERR_SEC_SUCCESS {
-        Ok(())
-    } else {
-        Err(format!("keychain add failed ({})", status))
-    }
+    entry(&account)?.set_password(&secret).map_err(|e| e.to_string())
 }
 
-/// Retrieve the master password for `account`. Triggers the Touch ID prompt.
-/// Returns Err("CANCELLED") if the user dismisses the prompt.
-#[tauri::command]
-pub fn biometric_get(account: String, prompt: String) -> Result<String, String> {
-    let mut pairs = base_pairs(&account);
-    unsafe {
-        pairs.push((key(kSecReturnData), CFBoolean::true_value().as_CFType()));
-        pairs.push((key(kSecMatchLimit), key(kSecMatchLimitOne).as_CFType()));
-        pairs.push((key(kSecUseOperationPrompt), CFString::new(&prompt).as_CFType()));
-        pairs.push((key(kSecUseDataProtectionKeychain), CFBoolean::true_value().as_CFType()));
-    }
-    let dict = CFDictionary::from_CFType_pairs(&pairs);
-    let mut result: CFTypeRef = ptr::null();
-    let status = unsafe { SecItemCopyMatching(dict.as_CFTypeRef(), &mut result) };
-    if status == ERR_SEC_USER_CANCELED {
-        return Err("CANCELLED".into());
-    }
-    if status != ERR_SEC_SUCCESS || result.is_null() {
-        return Err(format!("keychain read failed ({})", status));
-    }
-    let data: CFData = unsafe { CFData::wrap_under_create_rule(result as _) };
-    String::from_utf8(data.bytes().to_vec()).map_err(|e| e.to_string())
-}
-
-/// Whether a biometric credential exists for `account` — does NOT prompt
-/// (no data is requested, so the OS doesn't decrypt the item).
+/// Whether a stored credential exists for `account`. No Touch ID prompt.
 #[tauri::command]
 pub fn biometric_has(account: String) -> bool {
-    let dict = CFDictionary::from_CFType_pairs(&base_pairs(&account));
-    let status = unsafe { SecItemCopyMatching(dict.as_CFTypeRef(), ptr::null_mut()) };
-    status == ERR_SEC_SUCCESS
+    matches!(entry(&account), Ok(e) if e.get_password().is_ok())
 }
 
 /// Remove the stored credential for `account`.
 #[tauri::command]
 pub fn biometric_delete(account: String) -> Result<(), String> {
-    let status = delete_internal(&account);
-    if status == ERR_SEC_SUCCESS || status == ERR_SEC_ITEM_NOT_FOUND {
-        Ok(())
-    } else {
-        Err(format!("keychain delete failed ({})", status))
+    let e = entry(&account)?;
+    match e.delete_credential() {
+        Ok(()) | Err(KeyringError::NoEntry) => Ok(()),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+/// Retrieve the master password for `account`, gated by Touch ID.
+/// Returns Err("CANCELLED") if the prompt is dismissed or auth fails.
+#[tauri::command]
+pub fn biometric_get(account: String, prompt: String) -> Result<String, String> {
+    let policy: Policy = PolicyBuilder::new()
+        .biometrics(Some(BiometricStrength::Strong))
+        .password(true) // allow login-password fallback
+        .build()
+        .ok_or_else(|| "could not build auth policy".to_string())?;
+
+    let text = Text {
+        android: AndroidText { title: "ApiPass", subtitle: None, description: None },
+        apple: &prompt, // shown as "ApiPass is trying to <prompt>"
+        windows: WindowsText::new("ApiPass", &prompt)
+            .ok_or_else(|| "prompt text too long".to_string())?,
+    };
+
+    match Context::new(()).blocking_authenticate(text, &policy) {
+        Ok(()) => entry(&account)?.get_password().map_err(|e| e.to_string()),
+        Err(_) => Err("CANCELLED".into()),
     }
 }

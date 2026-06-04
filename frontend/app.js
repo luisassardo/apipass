@@ -134,7 +134,7 @@
       set_confirm_pw: 'Confirmar', set_change_btn: 'Cambiar y guardar',
       set_pw_changed: '✓ Contraseña cambiada. Guarda/descarga la bóveda actualizada.',
       touchid_unlock: 'Desbloquear con Touch ID',
-      touchid_prompt: 'Desbloquear ApiPass',
+      touchid_prompt: 'desbloquear tu bóveda',
       err_touchid: 'No se pudo desbloquear con Touch ID.',
       set_touchid: 'Desbloquear esta bóveda con Touch ID',
       set_touchid_note: 'Guarda la contraseña maestra en el Llavero de macOS, protegida por Touch ID. Solo en este dispositivo.'
@@ -234,7 +234,7 @@
       set_confirm_pw: 'Confirm', set_change_btn: 'Change & save',
       set_pw_changed: '✓ Password changed. Save/download the updated vault.',
       touchid_unlock: 'Unlock with Touch ID',
-      touchid_prompt: 'Unlock ApiPass',
+      touchid_prompt: 'unlock your vault',
       err_touchid: 'Could not unlock with Touch ID.',
       set_touchid: 'Unlock this vault with Touch ID',
       set_touchid_note: 'Stores the master password in the macOS Keychain, protected by Touch ID. This device only.'
