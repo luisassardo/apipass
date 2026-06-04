@@ -125,7 +125,9 @@
       export_env: 'Exportar .env',
       env_imported_note: 'Importado de .env',
       env_import_done: 'Se importaron {n} keys desde el archivo .env.',
-      env_export_warn: 'Se exportará un archivo .env SIN cifrar con tus secretos. ¿Continuar?'
+      env_export_warn: 'Se exportará un archivo .env SIN cifrar con tus secretos. ¿Continuar?',
+      stat_key: 'key', stat_keys: 'keys', stat_to_rotate: 'para rotar',
+      filter_by: 'Filtrar por:'
     },
     en: {
       title: 'ApiPass',
@@ -214,7 +216,9 @@
       export_env: 'Export .env',
       env_imported_note: 'Imported from .env',
       env_import_done: 'Imported {n} keys from the .env file.',
-      env_export_warn: 'This exports an UNENCRYPTED .env file with your secrets. Continue?'
+      env_export_warn: 'This exports an UNENCRYPTED .env file with your secrets. Continue?',
+      stat_key: 'key', stat_keys: 'keys', stat_to_rotate: 'to rotate',
+      filter_by: 'Filter by:'
     }
   };
 
@@ -526,6 +530,7 @@
     pendingEnvelope = null;
     setDirty(false);
     editingId = null;
+    wipeClipboard(); // don't leave a copied secret on the clipboard after locking
     clearClipboardTimer();
     if (idleTimer) clearTimeout(idleTimer);
     $('#entries').innerHTML = '';
@@ -561,6 +566,7 @@
   // copy resets the previous button's countdown.
   let copyInterval = null;
   let activeCopyBtn = null;
+  let secretOnClipboard = false; // true while one of our secrets sits on the clipboard
 
   function resetActiveCopyBtn() {
     if (activeCopyBtn) {
@@ -577,6 +583,14 @@
     resetActiveCopyBtn();
   }
 
+  // Wipe the clipboard if (and only if) it holds one of our secrets.
+  function wipeClipboard() {
+    if (secretOnClipboard) {
+      navigator.clipboard.writeText('').catch(() => {});
+      secretOnClipboard = false;
+    }
+  }
+
   async function copySecret(text, btn) {
     try {
       await navigator.clipboard.writeText(text);
@@ -586,11 +600,12 @@
       return;
     }
     clearClipboardTimer(); // reset any prior countdown
+    secretOnClipboard = true;
     activeCopyBtn = btn;
     btn.classList.add('ok');
     btn.textContent = t('copied');
     const secs = settings.clipboardSeconds;
-    if (secs <= 0) { // auto-clear disabled — just show confirmation briefly
+    if (secs <= 0) { // auto-clear disabled — just show confirmation briefly (lock still wipes)
       clipboardTimer = setTimeout(() => clearClipboardTimer(), 1500);
       return;
     }
@@ -602,7 +617,7 @@
       copyInterval = setInterval(() => {
         remaining -= 1;
         if (remaining <= 0) {
-          navigator.clipboard.writeText('').catch(() => {});
+          wipeClipboard();
           clearClipboardTimer();
         } else {
           btn.textContent = remaining + 's';
@@ -632,8 +647,21 @@
       .sort((a, b) => (a.service || '').localeCompare(b.service || ''));
 
     $('#empty-state').classList.toggle('hidden', vault.entries.length !== 0);
+    renderStats();
 
     entries.forEach(entry => list.appendChild(renderEntry(entry)));
+  }
+
+  function renderStats() {
+    const total = vault.entries.length;
+    const stale = settings.staleDays > 0
+      ? vault.entries.filter(e => { const a = keyAgeDays(e); return a !== null && a >= settings.staleDays; }).length
+      : 0;
+    const stats = $('#vault-stats');
+    if (!total) { stats.textContent = ''; return; }
+    let txt = total + ' ' + (total === 1 ? t('stat_key') : t('stat_keys'));
+    if (stale > 0) txt += ' · ⚠ ' + stale + ' ' + t('stat_to_rotate');
+    stats.textContent = txt;
   }
 
   function el(tag, cls, text) {
@@ -650,8 +678,14 @@
     head.appendChild(el('span', 'entry-service', entry.service || '—'));
     if (entry.label) head.appendChild(el('span', 'entry-label', entry.label));
     const tags = el('div', 'entry-tags');
-    if (entry.env) tags.appendChild(el('span', 'tag env-' + entry.env, entry.env));
-    if (entry.project) tags.appendChild(el('span', 'tag', entry.project));
+    const filterTag = (cls, val) => {
+      const tg = el('span', cls + ' clickable', val);
+      tg.title = t('filter_by') + ' ' + val;
+      tg.addEventListener('click', () => { $('#search').value = val; renderEntries(); });
+      tags.appendChild(tg);
+    };
+    if (entry.env) filterTag('tag env-' + entry.env, entry.env);
+    if (entry.project) filterTag('tag', entry.project);
     if (entry.attachments && entry.attachments.length) {
       tags.appendChild(el('span', 'entry-attach', '📎 ' + entry.attachments.length));
     }
@@ -969,6 +1003,20 @@
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
+
+  // ---------- keyboard ----------
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (!$('#editor-overlay').classList.contains('hidden')) closeEditor();
+      else if (!$('#settings-overlay').classList.contains('hidden')) $('#settings-overlay').classList.add('hidden');
+    }
+  });
+  // Enter on the create-vault fields submits.
+  ['#create-password', '#create-password2'].forEach(id =>
+    $(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !$('#create-btn').disabled) createVault();
+    })
+  );
 
   // warn on tab close with unsaved changes
   window.addEventListener('beforeunload', e => {

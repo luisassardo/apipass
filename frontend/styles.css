@@ -286,6 +286,14 @@ textarea.text-input { resize: vertical; }
 .tag.env-staging { color: var(--warn); border-color: var(--warn); }
 .tag.env-dev { color: var(--ok); border-color: var(--ok); }
 .tag.stale { color: var(--warn); border-color: var(--warn); }
+.tag.clickable { cursor: pointer; }
+.tag.clickable:hover { border-color: var(--accent); color: var(--text); }
+
+.vault-stats {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin: 0 0 0.6rem 0.15rem;
+}
 
 .entry-secret-row {
   display: flex;
