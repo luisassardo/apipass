@@ -8,7 +8,7 @@ Inspirada en [KeePassXC](https://github.com/keepassxreboot/keepassxc), pero espe
 
 ## Descargar
 
-- **App de escritorio (macOS, Apple Silicon)** — [descarga la última versión](https://github.com/luisassardo/apipass/releases/latest) (`.dmg` firmado y notarizado por Apple).
+- **App de escritorio (macOS, Intel + Apple Silicon)** — [descarga la última versión](https://github.com/luisassardo/apipass/releases/latest) (`.dmg` universal, firmado y notarizado por Apple).
 - **Usar en el navegador** — [apipass.c-lab.tools](https://apipass.c-lab.tools)
 
 > Verifica la descarga: cada release incluye `SHA256SUMS.txt`. Puedes comprobar el hash del `.dmg` con [Hash Checker](https://github.com/luisassardo) o `shasum -a 256 ApiPass_*.dmg`.
