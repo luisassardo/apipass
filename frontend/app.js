@@ -18,7 +18,7 @@
 
   // Device-level preferences (localStorage; never secrets). Loaded at startup.
   const SETTINGS_KEY = 'apipass.settings';
-  const DEFAULT_SETTINGS = { clipboardSeconds: 20, idleMinutes: 5, lockOnBlur: true, strength: 'balanced', lang: 'es' };
+  const DEFAULT_SETTINGS = { clipboardSeconds: 20, idleMinutes: 5, lockOnBlur: true, strength: 'balanced', staleDays: 180, lang: 'es' };
   let settings = loadSettings();
 
   function loadSettings() {
@@ -115,7 +115,17 @@
       set_done: 'Listo',
       set_off: 'Nunca',
       set_min1: '1 minuto', set_min5: '5 minutos', set_min15: '15 minutos',
-      set_fast: 'Rápida (19 MiB)', set_balanced: 'Equilibrada (64 MiB)', set_strong: 'Fuerte (128 MiB, más lento)'
+      set_fast: 'Rápida (19 MiB)', set_balanced: 'Equilibrada (64 MiB)', set_strong: 'Fuerte (128 MiB, más lento)',
+      set_stale: 'Avisar de keys sin rotar desde hace',
+      set_d90: '90 días', set_d180: '180 días', set_d365: '1 año',
+      stale: 'rotar', stale_title: 'Esta key lleva mucho sin rotarse. Considera generar una nueva.',
+      gen_pass: '🎲 Generar frase',
+      gen_hint: 'Frase generada y rellenada abajo. Guárdala en un lugar seguro: no se puede recuperar.',
+      import_env: 'Importar .env',
+      export_env: 'Exportar .env',
+      env_imported_note: 'Importado de .env',
+      env_import_done: 'Se importaron {n} keys desde el archivo .env.',
+      env_export_warn: 'Se exportará un archivo .env SIN cifrar con tus secretos. ¿Continuar?'
     },
     en: {
       title: 'ApiPass',
@@ -194,7 +204,17 @@
       set_done: 'Done',
       set_off: 'Never',
       set_min1: '1 minute', set_min5: '5 minutes', set_min15: '15 minutes',
-      set_fast: 'Fast (19 MiB)', set_balanced: 'Balanced (64 MiB)', set_strong: 'Strong (128 MiB, slower)'
+      set_fast: 'Fast (19 MiB)', set_balanced: 'Balanced (64 MiB)', set_strong: 'Strong (128 MiB, slower)',
+      set_stale: 'Warn about keys not rotated in',
+      set_d90: '90 days', set_d180: '180 days', set_d365: '1 year',
+      stale: 'rotate', stale_title: 'This key has not been rotated in a long time. Consider generating a new one.',
+      gen_pass: '🎲 Generate passphrase',
+      gen_hint: 'Passphrase generated and filled in below. Save it somewhere safe — it cannot be recovered.',
+      import_env: 'Import .env',
+      export_env: 'Export .env',
+      env_imported_note: 'Imported from .env',
+      env_import_done: 'Imported {n} keys from the .env file.',
+      env_export_warn: 'This exports an UNENCRYPTED .env file with your secrets. Continue?'
     }
   };
 
@@ -270,6 +290,14 @@
   function fmtDate(iso) {
     if (!iso) return '—';
     try { return new Date(iso).toLocaleDateString(); } catch (_) { return iso; }
+  }
+  // Age in whole days since the key was last rotated (or created). null if unknown.
+  function keyAgeDays(entry) {
+    const iso = entry.rotated || entry.created;
+    if (!iso) return null;
+    const then = new Date(iso).getTime();
+    if (isNaN(then)) return null;
+    return Math.floor((Date.now() - then) / (24 * 60 * 60 * 1000));
   }
   function setDirty(v) {
     dirty = v;
@@ -442,6 +470,24 @@
   $('#create-password2').addEventListener('input', refreshCreateBtn);
   $('#create-btn').addEventListener('click', createVault);
 
+  // Master-passphrase generator: 7 random words from the vendored list (~56 bits).
+  $('#gen-pass').addEventListener('click', () => {
+    const words = window.ApiPassWords || [];
+    if (!words.length) return;
+    const n = 7;
+    const picks = [];
+    const rnd = crypto.getRandomValues(new Uint32Array(n));
+    for (let i = 0; i < n; i++) picks.push(words[rnd[i] % words.length]);
+    const phrase = picks.join('-');
+    // Show it (plain text) so the user can save it, and fill both fields.
+    $('#create-password').type = 'text';
+    $('#create-password').value = phrase;
+    $('#create-password2').value = phrase;
+    $('#create-password').dispatchEvent(new Event('input'));
+    $('#create-password2').dispatchEvent(new Event('input'));
+    $('#gen-hint').classList.remove('hidden');
+  });
+
   function createVault() {
     const pw = $('#create-password').value;
     const pw2 = $('#create-password2').value;
@@ -463,7 +509,10 @@
     // clear lock-screen secrets from the DOM
     $('#open-password').value = '';
     $('#create-password').value = '';
+    $('#create-password').type = 'password';
     $('#create-password2').value = '';
+    $('#gen-hint').classList.add('hidden');
+    $('#pw-strength').classList.add('hidden');
     pendingEnvelope = null;
     renderEntries();
     resetIdleTimer();
@@ -605,6 +654,12 @@
     if (entry.project) tags.appendChild(el('span', 'tag', entry.project));
     if (entry.attachments && entry.attachments.length) {
       tags.appendChild(el('span', 'entry-attach', '📎 ' + entry.attachments.length));
+    }
+    const staleDays = keyAgeDays(entry);
+    if (settings.staleDays > 0 && staleDays !== null && staleDays >= settings.staleDays) {
+      const badge = el('span', 'tag stale', '⚠ ' + t('stale') + ' (' + staleDays + 'd)');
+      badge.title = t('stale_title');
+      tags.appendChild(badge);
     }
     head.appendChild(tags);
     card.appendChild(head);
@@ -851,6 +906,70 @@
     }
   }
 
+  // ---------- .env import / export ----------
+  $('#env-input').addEventListener('change', () => {
+    const file = $('#env-input').files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { importEnv(reader.result); $('#env-input').value = ''; };
+    reader.readAsText(file);
+  });
+
+  function importEnv(text) {
+    let added = 0;
+    text.split(/\r?\n/).forEach(raw => {
+      let line = raw.trim();
+      if (!line || line.startsWith('#')) return;
+      line = line.replace(/^export\s+/, '');
+      const eq = line.indexOf('=');
+      if (eq < 1) return;
+      const key = line.slice(0, eq).trim();
+      let val = line.slice(eq + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) return; // not a valid env var name
+      vault.entries.push({
+        id: genId(), service: key, label: '', secret: val,
+        env: '', project: '', notes: t('env_imported_note'),
+        attachments: [], created: nowISO(), rotated: ''
+      });
+      added++;
+    });
+    if (added) { setDirty(true); renderEntries(); }
+    window.alert(t('env_import_done').replace('{n}', added));
+  }
+
+  $('#export-env').addEventListener('click', exportEnv);
+  async function exportEnv() {
+    if (!vault.entries.length) return;
+    if (!window.confirm(t('env_export_warn'))) return;
+    const lines = ['# Exported from ApiPass — ' + nowISO().slice(0, 10), '# WARNING: this file is NOT encrypted.', ''];
+    vault.entries.forEach(e => {
+      const key = (e.service || 'KEY').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'KEY';
+      let val = e.secret || '';
+      const tag = [e.label, e.env, e.project].filter(Boolean).join(' · ');
+      if (tag) lines.push('# ' + tag);
+      if (/\n/.test(val)) val = JSON.stringify(val);       // collapse multiline safely
+      else if (/\s/.test(val)) val = '"' + val + '"';
+      lines.push(key + '=' + val);
+    });
+    const text = lines.join('\n') + '\n';
+    if (IS_TAURI) {
+      try {
+        const path = await TAURI.dialog.save({ defaultPath: 'apipass.env' });
+        if (!path) return;
+        await TAURI.core.invoke('write_vault', { path: path, contents: text });
+      } catch (err) { window.alert(t('save_failed') + ' ' + err); }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'apipass.env';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   // warn on tab close with unsaved changes
   window.addEventListener('beforeunload', e => {
     if (dirty) { e.preventDefault(); e.returnValue = ''; }
@@ -868,6 +987,7 @@
     $('#set-idle').value = String(settings.idleMinutes);
     $('#set-blur').checked = !!settings.lockOnBlur;
     $('#set-strength').value = settings.strength;
+    $('#set-stale').value = String(settings.staleDays);
     $('#settings-overlay').classList.remove('hidden');
   }
 
@@ -878,6 +998,10 @@
   $('#set-strength').addEventListener('change', e => {
     settings.strength = e.target.value; saveSettings();
     if (vault) setDirty(true); // re-save to apply the new KDF strength
+  });
+  $('#set-stale').addEventListener('change', e => {
+    settings.staleDays = parseInt(e.target.value, 10); saveSettings();
+    if (vault) renderEntries();
   });
 
   // ---------- init ----------

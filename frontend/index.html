@@ -48,12 +48,16 @@
     <!-- Create new vault -->
     <div id="panel-create" class="lock-panel hidden">
       <p class="hint" data-i18n="create_hint">Crea una bóveda nueva y vacía. Elige una contraseña maestra fuerte: es la única forma de abrir el archivo, y no se puede recuperar.</p>
-      <label class="field-label" data-i18n="master_password">Contraseña maestra</label>
+      <div class="pw-label-row">
+        <label class="field-label" data-i18n="master_password">Contraseña maestra</label>
+        <button type="button" id="gen-pass" class="link-btn" data-i18n="gen_pass">🎲 Generar frase</button>
+      </div>
       <input type="password" id="create-password" class="text-input" autocomplete="off" spellcheck="false">
       <div id="pw-strength" class="pw-strength hidden">
         <div class="pw-bar"><div id="pw-bar-fill"></div></div>
         <span id="pw-strength-label"></span>
       </div>
+      <p id="gen-hint" class="attach-note hidden" data-i18n="gen_hint">Frase generada y rellenada abajo. Guárdala en un lugar seguro: no se puede recuperar.</p>
       <label class="field-label" data-i18n="confirm_password">Confirmar contraseña</label>
       <input type="password" id="create-password2" class="text-input" autocomplete="off" spellcheck="false">
       <button id="create-btn" class="btn btn-primary" disabled data-i18n="create_open">Crear y abrir</button>
@@ -71,6 +75,11 @@
     <div class="vault-toolbar">
       <input type="search" id="search" class="text-input search" autocomplete="off" spellcheck="false" data-i18n-ph="search_ph" placeholder="Buscar por servicio, proyecto, entorno…">
       <button id="add-btn" class="btn btn-primary" data-i18n="add_key">+ Añadir key</button>
+      <label class="btn btn-sm import-env" title=".env">
+        <span data-i18n="import_env">Importar .env</span>
+        <input type="file" id="env-input" accept=".env,text/plain,.txt" hidden>
+      </label>
+      <button id="export-env" class="btn btn-sm" data-i18n="export_env">Exportar .env</button>
     </div>
 
     <div id="dirty-bar" class="dirty-bar hidden">
@@ -162,6 +171,14 @@
     </select>
     <p class="attach-note" data-i18n="set_strength_note">Se aplica al guardar. Mayor fuerza = más difícil de romper, pero el desbloqueo tarda más.</p>
 
+    <label class="field-label" data-i18n="set_stale">Avisar de keys sin rotar desde hace</label>
+    <select id="set-stale" class="text-input">
+      <option value="90" data-i18n="set_d90">90 días</option>
+      <option value="180" data-i18n="set_d180">180 días</option>
+      <option value="365" data-i18n="set_d365">1 año</option>
+      <option value="0" data-i18n="set_off">Nunca</option>
+    </select>
+
     <div class="modal-actions">
       <button id="settings-close" class="btn btn-primary" data-i18n="set_done">Listo</button>
     </div>
@@ -177,6 +194,7 @@
 </footer>
 
 <script src="argon2.js"></script>
+<script src="words.js"></script>
 <script src="crypto.js"></script>
 <script src="app.js"></script>
 </body>

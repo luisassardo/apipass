@@ -154,6 +154,18 @@ textarea.text-input { resize: vertical; }
   font-weight: 500;
 }
 
+.pw-label-row { display: flex; justify-content: space-between; align-items: baseline; }
+.link-btn {
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+}
+.link-btn:hover { text-decoration: underline; }
+
 .hint {
   color: var(--text-dim);
   font-size: 0.85rem;
@@ -225,8 +237,8 @@ textarea.text-input { resize: vertical; }
 }
 
 /* ---------- vault toolbar ---------- */
-.vault-toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
-.vault-toolbar .search { flex: 1; }
+.vault-toolbar { display: flex; gap: 0.6rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+.vault-toolbar .search { flex: 1; min-width: 180px; }
 .vault-toolbar .btn-primary { white-space: nowrap; }
 
 .dirty-bar {
@@ -273,6 +285,7 @@ textarea.text-input { resize: vertical; }
 .tag.env-prod { color: var(--err); border-color: var(--err); }
 .tag.env-staging { color: var(--warn); border-color: var(--warn); }
 .tag.env-dev { color: var(--ok); border-color: var(--ok); }
+.tag.stale { color: var(--warn); border-color: var(--warn); }
 
 .entry-secret-row {
   display: flex;
