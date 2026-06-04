@@ -362,6 +362,34 @@ textarea.text-input { resize: vertical; }
   margin-top: 1.5rem;
 }
 
+/* attachments */
+.attach-list { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.35rem 0; }
+.attach-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.85rem;
+}
+.attach-name { flex: 1; word-break: break-all; }
+.attach-name::before { content: "📎 "; }
+.attach-size { color: var(--text-dim); font-size: 0.75rem; white-space: nowrap; }
+.attach-add { margin-top: 0.3rem; display: inline-block; }
+.attach-note { font-size: 0.75rem; color: var(--text-dim); margin: 0.5rem 0 0; }
+
+/* attachment indicator on entry cards */
+.entry-attach {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  font-family: var(--mono);
+}
+
 /* ---------- about ---------- */
 .about {
   background: var(--bg-elev);

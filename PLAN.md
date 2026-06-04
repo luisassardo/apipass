@@ -93,6 +93,7 @@ Plaintext (encrypted as the `ciphertext`) is the vault object:
 | `project` | client / project tag for filtering |
 | `notes` | scopes, rotation policy, where it's used |
 | `created`, `rotated` | dates — surfaces stale keys for rotation |
+| `attachments` | companion files (certs, service-account JSON, keys): `[{id,name,type,size,data(base64)}]`, encrypted in-vault, 1 MB/file cap. Export writes plaintext to disk (UI warns). |
 
 ## UX
 

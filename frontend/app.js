@@ -8,6 +8,7 @@
   const CRYPTO = window.ApiPassCrypto;
   const CLIPBOARD_CLEAR_SECONDS = 20; // wipe clipboard N seconds after a copy (KeePassXC-style)
   const IDLE_LOCK_MS = 5 * 60 * 1000; // auto-lock after 5 min idle
+  const MAX_ATTACH_BYTES = 1024 * 1024; // 1 MB per attachment
 
   // Desktop (Tauri) detection. When present, we use native open/save so the app
   // reads and writes the real .apikeys file in place instead of downloading copies.
@@ -75,7 +76,15 @@
       pw_weak: 'Débil',
       pw_fair: 'Aceptable',
       pw_good: 'Buena',
-      pw_strong: 'Fuerte'
+      pw_strong: 'Fuerte',
+      f_attachments: 'Archivos adjuntos',
+      attach_add: '+ Añadir archivo',
+      attach_note: 'Certificados, JSON de cuenta de servicio, claves… Se guardan cifrados dentro de la bóveda. Máx. 1 MB por archivo.',
+      attach_download: 'Descargar',
+      attach_remove: 'Quitar',
+      attach_too_big: 'supera el límite de 1 MB y no se adjuntó.',
+      attach_export_warn: 'Este archivo se guardará SIN cifrar en tu disco. ¿Continuar?',
+      attach_saved: 'Archivo guardado.'
     },
     en: {
       title: 'ApiPass',
@@ -136,7 +145,15 @@
       pw_weak: 'Weak',
       pw_fair: 'Fair',
       pw_good: 'Good',
-      pw_strong: 'Strong'
+      pw_strong: 'Strong',
+      f_attachments: 'Attachments',
+      attach_add: '+ Add file',
+      attach_note: 'Certificates, service-account JSON, keys… stored encrypted inside the vault. Max 1 MB per file.',
+      attach_download: 'Download',
+      attach_remove: 'Remove',
+      attach_too_big: 'exceeds the 1 MB limit and was not attached.',
+      attach_export_warn: 'This file will be saved UNENCRYPTED to your disk. Continue?',
+      attach_saved: 'File saved.'
     }
   };
 
@@ -199,6 +216,7 @@
   let idleTimer = null;
   let pendingEnvelope = null; // parsed file awaiting password on the open panel
   let currentVaultPath = null; // desktop only: path of the open/last-saved vault file
+  let editorAttachments = []; // working copy of the open entry's attachments
 
   const $ = sel => document.querySelector(sel);
 
@@ -503,7 +521,8 @@
 
   function matchesQuery(entry, q) {
     if (!q) return true;
-    const hay = [entry.service, entry.label, entry.project, entry.env, entry.notes]
+    const attachNames = (entry.attachments || []).map(a => a.name).join(' ');
+    const hay = [entry.service, entry.label, entry.project, entry.env, entry.notes, attachNames]
       .filter(Boolean).join(' ').toLowerCase();
     return hay.includes(q);
   }
@@ -538,6 +557,9 @@
     const tags = el('div', 'entry-tags');
     if (entry.env) tags.appendChild(el('span', 'tag env-' + entry.env, entry.env));
     if (entry.project) tags.appendChild(el('span', 'tag', entry.project));
+    if (entry.attachments && entry.attachments.length) {
+      tags.appendChild(el('span', 'entry-attach', '📎 ' + entry.attachments.length));
+    }
     head.appendChild(tags);
     card.appendChild(head);
 
@@ -599,6 +621,11 @@
     $('#f-env').value = entry ? (entry.env || '') : '';
     $('#f-project').value = entry ? (entry.project || '') : '';
     $('#f-notes').value = entry ? (entry.notes || '') : '';
+    // attachments: edit a clone so Cancel discards changes
+    editorAttachments = entry && Array.isArray(entry.attachments)
+      ? entry.attachments.map(a => Object.assign({}, a)) : [];
+    $('#attach-error').textContent = '';
+    renderAttachList();
     $('#editor-overlay').classList.remove('hidden');
     $('#f-service').focus();
   }
@@ -606,6 +633,8 @@
   function closeEditor() {
     $('#editor-overlay').classList.add('hidden');
     editingId = null;
+    editorAttachments = [];
+    $('#attach-input').value = '';
   }
 
   function saveEntry() {
@@ -617,7 +646,8 @@
       secret: $('#f-secret').value,
       env: $('#f-env').value,
       project: $('#f-project').value.trim(),
-      notes: $('#f-notes').value.trim()
+      notes: $('#f-notes').value.trim(),
+      attachments: editorAttachments
     };
     if (editingId) {
       const entry = vault.entries.find(e => e.id === editingId);
@@ -630,6 +660,97 @@
     setDirty(true);
     closeEditor();
     renderEntries();
+  }
+
+  // ---------- attachments ----------
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(2) + ' MB';
+  }
+  function arrayBufferToB64(buf) {
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    const CHUNK = 0x8000; // avoid call-stack limits on large files
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin);
+  }
+  function b64ToBlob(b64, type) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: type || 'application/octet-stream' });
+  }
+
+  $('#attach-input').addEventListener('change', () => {
+    const files = Array.from($('#attach-input').files || []);
+    $('#attach-error').textContent = '';
+    files.forEach(file => {
+      if (file.size > MAX_ATTACH_BYTES) {
+        $('#attach-error').textContent = '"' + file.name + '" ' + t('attach_too_big');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        editorAttachments.push({
+          id: genId(),
+          name: file.name,
+          type: file.type || 'application/octet-stream',
+          size: file.size,
+          data: arrayBufferToB64(reader.result)
+        });
+        renderAttachList();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+    $('#attach-input').value = ''; // allow re-adding the same filename
+  });
+
+  function renderAttachList() {
+    const list = $('#attach-list');
+    list.innerHTML = '';
+    editorAttachments.forEach(att => {
+      const item = el('div', 'attach-item');
+      item.appendChild(el('span', 'attach-name', att.name));
+      item.appendChild(el('span', 'attach-size', fmtBytes(att.size)));
+      const dl = el('button', 'icon-btn', t('attach_download'));
+      dl.type = 'button';
+      dl.addEventListener('click', () => exportAttachment(att));
+      const rm = el('button', 'icon-btn', t('attach_remove'));
+      rm.type = 'button';
+      rm.addEventListener('click', () => {
+        editorAttachments = editorAttachments.filter(a => a.id !== att.id);
+        renderAttachList();
+      });
+      item.appendChild(dl);
+      item.appendChild(rm);
+      list.appendChild(item);
+    });
+  }
+
+  // Export an attachment to disk. WARNING: writes plaintext (no longer encrypted).
+  async function exportAttachment(att) {
+    if (!window.confirm(t('attach_export_warn'))) return;
+    if (IS_TAURI) {
+      try {
+        const path = await TAURI.dialog.save({ defaultPath: att.name });
+        if (!path) return;
+        await TAURI.core.invoke('write_file_b64', { path: path, b64: att.data });
+      } catch (err) {
+        window.alert(t('save_failed') + ' ' + (err && err.message ? err.message : err));
+      }
+      return;
+    }
+    const url = URL.createObjectURL(b64ToBlob(att.data, att.type));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = att.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   function deleteEntry(id) {

@@ -109,6 +109,16 @@
     </div>
     <label class="field-label" data-i18n="f_notes">Notas</label>
     <textarea id="f-notes" class="text-input" rows="2" autocomplete="off" data-i18n-ph="f_notes_ph" placeholder="alcance, política de rotación, dónde se usa…"></textarea>
+
+    <label class="field-label" data-i18n="f_attachments">Archivos adjuntos</label>
+    <div id="attach-list" class="attach-list"></div>
+    <label class="btn btn-sm attach-add">
+      <span data-i18n="attach_add">+ Añadir archivo</span>
+      <input type="file" id="attach-input" multiple hidden>
+    </label>
+    <p class="attach-note" data-i18n="attach_note">Certificados, JSON de cuenta de servicio, claves… Se guardan cifrados dentro de la bóveda. Máx. 1 MB por archivo.</p>
+    <p id="attach-error" class="form-error"></p>
+
     <div class="modal-actions">
       <button id="editor-cancel" class="btn" data-i18n="cancel">Cancelar</button>
       <button id="editor-save" class="btn btn-primary" data-i18n="save_entry">Guardar key</button>

@@ -19,6 +19,17 @@ fn write_vault(path: String, contents: String) -> Result<(), String> {
     std::fs::write(&path, contents).map_err(|e| e.to_string())
 }
 
+// Write a base64-encoded attachment to a path the user chose via the native
+// save dialog. The bytes land UNENCRYPTED on disk (the UI warns first).
+#[tauri::command]
+fn write_file_b64(path: String, b64: String) -> Result<(), String> {
+    use base64::Engine;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(b64.as_bytes())
+        .map_err(|e| e.to_string())?;
+    std::fs::write(&path, bytes).map_err(|e| e.to_string())
+}
+
 // Open an external link in the user's default browser instead of navigating the
 // app's webview. Restricted to http(s) so the webview can't be told to launch
 // arbitrary URL schemes.
@@ -54,7 +65,7 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![read_vault, write_vault, open_url])
+        .invoke_handler(tauri::generate_handler![read_vault, write_vault, write_file_b64, open_url])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
