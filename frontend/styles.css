@@ -256,6 +256,8 @@ textarea.text-input { resize: vertical; }
 
 .lock-panel { display: flex; flex-direction: column; }
 .lock-panel .btn-primary { margin-top: 1.25rem; }
+.touchid-btn { margin-top: 0.6rem; }
+.touchid-btn::before { content: "☉ "; opacity: 0.8; }
 
 .file-pick { margin-top: 0.3rem; }
 .file-pick.has-file { border-color: var(--ok); color: var(--ok); }

@@ -40,6 +40,7 @@
       <label class="field-label" data-i18n="master_password">Contraseña maestra</label>
       <input type="password" id="open-password" class="text-input" autocomplete="off" spellcheck="false">
       <button id="open-btn" class="btn btn-primary" disabled data-i18n="unlock">Desbloquear</button>
+      <button id="touchid-btn" class="btn touchid-btn hidden" data-i18n="touchid_unlock">Desbloquear con Touch ID</button>
       <p id="open-error" class="form-error"></p>
     </div>
 
@@ -183,6 +184,15 @@
       <option value="365" data-i18n="set_d365">1 año</option>
       <option value="0" data-i18n="set_off">Nunca</option>
     </select>
+
+    <div id="touchid-setting" class="hidden">
+      <hr class="set-divider">
+      <label class="set-check">
+        <input type="checkbox" id="set-touchid">
+        <span data-i18n="set_touchid">Desbloquear esta bóveda con Touch ID</span>
+      </label>
+      <p class="attach-note" data-i18n="set_touchid_note">Guarda la contraseña maestra en el Llavero de macOS, protegida por Touch ID. Solo en este dispositivo.</p>
+    </div>
 
     <div id="change-pw-section" class="hidden">
       <hr class="set-divider">

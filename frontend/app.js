@@ -35,6 +35,7 @@
   // reads and writes the real .apikeys file in place instead of downloading copies.
   const TAURI = window.__TAURI__ || null;
   const IS_TAURI = !!TAURI;
+  let biometricSupported = false; // set async at startup (macOS Touch ID)
 
   // ---------- i18n ----------
   const STRINGS = {
@@ -131,7 +132,12 @@
       filter_by: 'Filtrar por:',
       set_change_pw: 'Cambiar contraseña maestra', set_new_pw: 'Nueva contraseña',
       set_confirm_pw: 'Confirmar', set_change_btn: 'Cambiar y guardar',
-      set_pw_changed: '✓ Contraseña cambiada. Guarda/descarga la bóveda actualizada.'
+      set_pw_changed: '✓ Contraseña cambiada. Guarda/descarga la bóveda actualizada.',
+      touchid_unlock: 'Desbloquear con Touch ID',
+      touchid_prompt: 'Desbloquear ApiPass',
+      err_touchid: 'No se pudo desbloquear con Touch ID.',
+      set_touchid: 'Desbloquear esta bóveda con Touch ID',
+      set_touchid_note: 'Guarda la contraseña maestra en el Llavero de macOS, protegida por Touch ID. Solo en este dispositivo.'
     },
     en: {
       title: 'ApiPass',
@@ -226,7 +232,12 @@
       filter_by: 'Filter by:',
       set_change_pw: 'Change master password', set_new_pw: 'New password',
       set_confirm_pw: 'Confirm', set_change_btn: 'Change & save',
-      set_pw_changed: '✓ Password changed. Save/download the updated vault.'
+      set_pw_changed: '✓ Password changed. Save/download the updated vault.',
+      touchid_unlock: 'Unlock with Touch ID',
+      touchid_prompt: 'Unlock ApiPass',
+      err_touchid: 'Could not unlock with Touch ID.',
+      set_touchid: 'Unlock this vault with Touch ID',
+      set_touchid_note: 'Stores the master password in the macOS Keychain, protected by Touch ID. This device only.'
     }
   };
 
@@ -410,10 +421,13 @@
       e.preventDefault();
       TAURI.core.invoke('open_url', { url: clab.href });
     });
+    // Is biometric unlock available on this machine?
+    TAURI.core.invoke('biometric_supported').then(v => { biometricSupported = !!v; }).catch(() => {});
   }
 
   async function openVaultNative() {
     $('#open-error').textContent = '';
+    $('#touchid-btn').classList.add('hidden');
     try {
       const selected = await TAURI.dialog.open({
         multiple: false,
@@ -427,11 +441,37 @@
       $('#open-filename').textContent = path.replace(/\\/g, '/').split('/').pop();
       $('.file-pick').classList.add('has-file');
       refreshOpenBtn();
+      // Offer Touch ID if this vault has a stored credential.
+      if (biometricSupported) {
+        TAURI.core.invoke('biometric_has', { account: path })
+          .then(has => $('#touchid-btn').classList.toggle('hidden', !has))
+          .catch(() => {});
+      }
     } catch (_) {
       pendingEnvelope = null;
       $('#open-error').textContent = t('err_bad_format');
     }
   }
+
+  // Unlock via Touch ID: retrieve the stored password (OS prompts), then decrypt.
+  $('#touchid-btn').addEventListener('click', async () => {
+    if (!pendingEnvelope || !currentVaultPath) return;
+    $('#open-error').textContent = '';
+    const btn = $('#touchid-btn');
+    setBtnBusy(btn, t('unlocking'));
+    try {
+      const pw = await TAURI.core.invoke('biometric_get', { account: currentVaultPath, prompt: t('touchid_prompt') });
+      const obj = await CRYPTO.decryptVault(pendingEnvelope, pw);
+      vault = normalizeVault(obj);
+      masterPassword = pw;
+      clearBtnBusy(btn, 'touchid_unlock');
+      enterVault();
+    } catch (e) {
+      clearBtnBusy(btn, 'touchid_unlock');
+      const code = (e && e.message) ? e.message : e;
+      if (code !== 'CANCELLED') $('#open-error').textContent = t('err_touchid');
+    }
+  });
 
   $('#open-password').addEventListener('input', refreshOpenBtn);
   function refreshOpenBtn() {
@@ -549,6 +589,7 @@
     $('#lock-screen').classList.remove('hidden');
     $('#open-filename').textContent = t('choose_vault');
     $('.file-pick').classList.remove('has-file');
+    $('#touchid-btn').classList.add('hidden');
     vaultFileInput.value = '';
     refreshOpenBtn();
     switchLockTab('open');
@@ -1065,8 +1106,30 @@
     // "Change master password" only makes sense while a vault is open.
     $('#change-pw-section').classList.toggle('hidden', !vault);
     $('#chpw-new').value = ''; $('#chpw-confirm').value = ''; $('#chpw-msg').textContent = '';
+    // Touch ID toggle: desktop, supported, vault open with a saved path.
+    const showTouch = IS_TAURI && biometricSupported && !!vault && !!currentVaultPath;
+    $('#touchid-setting').classList.toggle('hidden', !showTouch);
+    if (showTouch) {
+      TAURI.core.invoke('biometric_has', { account: currentVaultPath })
+        .then(has => { $('#set-touchid').checked = !!has; }).catch(() => {});
+    }
     $('#settings-overlay').classList.remove('hidden');
   }
+
+  // Enable/disable Touch ID for the current vault.
+  $('#set-touchid').addEventListener('change', async e => {
+    if (!currentVaultPath || !masterPassword) { e.target.checked = !e.target.checked; return; }
+    try {
+      if (e.target.checked) {
+        await TAURI.core.invoke('biometric_store', { account: currentVaultPath, secret: masterPassword });
+      } else {
+        await TAURI.core.invoke('biometric_delete', { account: currentVaultPath });
+      }
+    } catch (err) {
+      window.alert(String(err && err.message ? err.message : err));
+      e.target.checked = !e.target.checked; // revert on failure
+    }
+  });
 
   // Change the vault's master password: update the in-memory key and re-encrypt
   // (a fresh salt is generated on every save, so this fully re-keys the file).
@@ -1080,6 +1143,14 @@
     setDirty(true);
     $('#chpw-new').value = ''; $('#chpw-confirm').value = '';
     await saveVault();          // persist immediately with the new password
+    // If Touch ID was enabled for this vault, update the stored password too.
+    if (IS_TAURI && biometricSupported && currentVaultPath) {
+      try {
+        if (await TAURI.core.invoke('biometric_has', { account: currentVaultPath })) {
+          await TAURI.core.invoke('biometric_store', { account: currentVaultPath, secret: pw });
+        }
+      } catch (_) {}
+    }
     msg.style.color = 'var(--ok)';
     msg.textContent = t('set_pw_changed');
   });

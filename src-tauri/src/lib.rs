@@ -9,9 +9,19 @@
 // envelope) at a path the user chose through the native dialog. They never see
 // the master password or decrypted secrets — encryption happens in the webview.
 
+#[cfg(target_os = "macos")]
+mod biometric;
+
 #[tauri::command]
 fn read_vault(path: String) -> Result<String, String> {
     std::fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+
+// Is biometric unlock supported on this platform? (macOS Keychain + Touch ID /
+// user-presence; on a Mac without Touch ID it falls back to the login password.)
+#[tauri::command]
+fn biometric_supported() -> bool {
+    cfg!(target_os = "macos")
 }
 
 #[tauri::command]
@@ -65,7 +75,11 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![read_vault, write_vault, write_file_b64, open_url])
+        .invoke_handler(tauri::generate_handler![
+            read_vault, write_vault, write_file_b64, open_url, biometric_supported,
+            biometric::biometric_store, biometric::biometric_get,
+            biometric::biometric_has, biometric::biometric_delete
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
