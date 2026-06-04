@@ -1,21 +1,36 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
-<title>ApiPass — bóveda local de API keys</title>
+<title>ApiPass · local vault for API keys · C-LAB</title>
+<meta name="theme-color" content="#07090c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307090c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%235be3c3' stroke-opacity='.55'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%235be3c3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="node.css">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-<header>
-  <div class="brand">
-    <h1 data-i18n="title">ApiPass</h1>
-    <p class="subtitle" data-i18n="subtitle">Tus API keys, cifradas y organizadas. Nunca salen de tu dispositivo.</p>
+<body data-node="apipass">
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <div class="bg-scan"></div>
+  <div class="bg-motes"></div>
+</div>
+
+<span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br brr"></span>
+
+<header class="rail">
+  <div class="group">
+    <span class="brand"><span class="mark" data-ico="shield"></span> ARGUS</span>
+    <span class="crumb hide-narrow"><span class="sep">/</span> <a href="https://c-lab.tools/" rel="noopener">C-LAB</a> <span class="sep">/</span> <span class="sig">APIPASS</span></span>
   </div>
-  <div class="header-right">
-    <button type="button" id="lock-btn" class="btn lock-btn hidden" data-i18n="lock">Bloquear</button>
+  <div class="group">
+    <span class="hide-narrow">AES-256-GCM · ARGON2ID</span>
+    <span class="hide-narrow"><span id="clock">--:--:--</span> UTC</span>
+    <button type="button" id="lock-btn" class="btn btn-sm lock-btn hidden" data-i18n="lock">Lock</button>
     <button type="button" id="settings-btn" class="icon-btn-square" title="Settings" aria-label="Settings">
       <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
@@ -209,14 +224,21 @@
   </div>
 </div>
 
-<footer>
-  <p>
-    <span data-i18n="footer">Esta herramienta es parte de</span>
-    <a id="clab-link" href="https://c-lab.tools/" rel="noopener" target="_blank">C-LAB</a> ·
+<footer class="rail">
+  <nav class="netnav" aria-label="Node network">
+    <a class="node" href="https://argusdn.org/" rel="noopener"><span class="dotmark"></span> ARGUS</a>
+    <a class="node" id="clab-link" href="https://c-lab.tools/" rel="noopener"><span class="dotmark"></span> C-LAB</a>
+    <a class="node live" href="https://hashcheck.c-lab.tools/" rel="noopener"><span class="dotmark"></span> HASHCHECK</a>
+    <span class="node active"><span class="dotmark"></span> APIPASS</span>
+  </nav>
+  <div class="info">
     <span data-i18n="for_audience">Creada para periodistas y defensores de derechos humanos.</span>
-  </p>
+    <span class="hide-narrow">© 2026 · ARGUS</span>
+  </div>
 </footer>
 
+<script src="icons.js"></script>
+<script src="node.js"></script>
 <script src="argon2.js"></script>
 <script src="words.js"></script>
 <script src="crypto.js"></script>

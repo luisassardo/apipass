@@ -1,114 +1,111 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<title>ApiPass — bóveda cifrada para tus API keys</title>
-<meta name="description" content="Bóveda cifrada para API keys, 100% offline. App firmada para macOS o úsala en el navegador. Parte de C-LAB.">
+<title>ApiPass · encrypted vault for your API keys · C-LAB</title>
+<meta name="description" content="Encrypted vault for API keys, 100% offline. Signed macOS app or use it in the browser. AES-256-GCM with an Argon2id-derived key. A C-LAB tool inside the ARGUS Defense Network.">
+<meta name="theme-color" content="#07090c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307090c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%235be3c3' stroke-opacity='.55'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%235be3c3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="node.css">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-<header class="site-header">
-  <a class="brand" href="/">ApiPass</a>
-  <nav>
-    <a href="#features" data-i18n="nav_features">Características</a>
-    <a href="#security" data-i18n="nav_security">Seguridad</a>
-    <a href="https://github.com/luisassardo/apipass" rel="noopener">GitHub</a>
-    <div class="lang-switch" role="group" aria-label="Language">
-      <button type="button" data-lang="es" class="active">ES</button>
-      <button type="button" data-lang="en">EN</button>
-    </div>
-  </nav>
+<body data-node="apipass">
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <div class="bg-scan"></div>
+  <div class="bg-motes"></div>
+  <div class="bg-sweep"></div>
+</div>
+
+<span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br brr"></span>
+
+<header class="rail">
+  <div class="group">
+    <span class="brand"><span class="mark" data-ico="shield"></span> ARGUS</span>
+    <span class="crumb hide-narrow"><span class="sep">/</span> <a href="https://c-lab.tools/" rel="noopener">C-LAB</a> <span class="sep">/</span> <span class="sig">APIPASS</span></span>
+  </div>
+  <div class="group">
+    <span class="hide-narrow">AES-256-GCM · ARGON2ID</span>
+    <span class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-lang="es">ES</button>
+      <button type="button" data-lang="en" class="active">EN</button>
+    </span>
+    <span><span id="clock">--:--:--</span> UTC</span>
+    <span class="status-pill"><span class="live-dot"></span> LIVE</span>
+  </div>
 </header>
 
 <main>
-  <section class="hero">
-    <p class="kicker"><span class="dot">●</span> <a href="https://c-lab.tools/" rel="noopener">C-LAB</a></p>
-    <h1 data-i18n="hero_title">Tus API keys, cifradas y bajo tu control.</h1>
-    <p class="lead" data-i18n="hero_lead">Una bóveda cifrada para guardar y organizar tus API keys. Funciona 100% en tu dispositivo: sin servidor, sin telemetría, sin nube. Inspirada en KeePassXC, pensada para periodistas y defensores de derechos humanos.</p>
+  <section class="identity">
+    <p class="eyebrow"><span class="ln"></span><span data-ico="key"></span> <span data-i18n="eyebrow">C-LAB · Tool · encrypted vault</span></p>
+    <h1 class="wordmark product"><span data-decode>Api</span><span class="accent" data-decode>Pass</span></h1>
+    <p class="role" data-i18n="role">Offline vault · open source · KeePassXC-inspired</p>
+    <h2 class="title" data-i18n="hero_title">Your API keys, encrypted and under your control.</h2>
+    <p class="desc" data-i18n="hero_lead">An encrypted vault to store and organize your API keys. It runs 100% on your device, no server, no telemetry, no cloud. AES-256-GCM with an Argon2id-derived master key; the vault file never leaves your machine.</p>
+
     <div class="cta-row">
-      <a id="download-btn" class="btn btn-primary" href="https://github.com/luisassardo/apipass/releases/latest/download/ApiPass-macOS.dmg">
-        <span data-i18n="cta_download">Descargar para macOS</span>
-      </a>
-      <a class="btn" href="/app/" data-i18n="cta_browser">Usar en el navegador</a>
+      <a class="btn primary" id="download-btn" href="https://github.com/luisassardo/apipass/releases/latest/download/ApiPass-macOS.dmg" rel="noopener"><span data-ico="apple"></span> <span data-i18n="cta_download">Download for macOS</span></a>
+      <a class="btn ghost" href="/app/"><span data-ico="bolt"></span> <span data-i18n="cta_browser">Use in browser</span></a>
+      <a class="btn bare" href="https://github.com/luisassardo/apipass" rel="noopener"><span data-ico="github"></span> GitHub</a>
     </div>
-    <p class="hero-note">
-      <span data-i18n="hero_note">macOS (Intel + Apple Silicon) · firmada y notarizada por Apple · gratis y de código abierto</span>
-      ·
-      <a href="https://github.com/luisassardo/apipass/releases/latest" rel="noopener" data-i18n="all_downloads">todas las descargas</a>
-    </p>
-  </section>
+    <p class="cta-note"><span data-i18n="hero_note">macOS Intel + Apple Silicon · signed &amp; notarized by Apple · free &amp; open source · </span><a href="https://github.com/luisassardo/apipass/releases/latest" rel="noopener" data-i18n="all_downloads">all downloads</a></p>
 
-  <section id="features" class="features">
-    <h2 data-i18n="features_title">Por qué ApiPass</h2>
-    <div class="grid">
-      <div class="card">
-        <h3 data-i18n="f1_t">Cifrado y offline</h3>
-        <p data-i18n="f1_d">AES-256-GCM con clave derivada de tu contraseña maestra con Argon2id (resistente a memoria). El archivo de bóveda nunca sale de tu dispositivo.</p>
-      </div>
-      <div class="card">
-        <h3 data-i18n="f2_t">Organizado para API keys</h3>
-        <p data-i18n="f2_d">Agrupa por servicio, proyecto y entorno (dev / staging / prod). Adjunta certificados y archivos. Busca al instante. Recordatorio de rotación.</p>
-      </div>
-      <div class="card">
-        <h3 data-i18n="f3_t">Copia con cuenta atrás</h3>
-        <p data-i18n="f3_d">Al estilo KeePassXC: la copia al portapapeles se borra automáticamente tras unos segundos.</p>
-      </div>
-      <div class="card">
-        <h3 data-i18n="f4_t">App firmada y notarizada</h3>
-        <p data-i18n="f4_d">La app de macOS está firmada con Developer ID y notarizada por Apple: se abre sin avisos de "desarrollador no identificado".</p>
-      </div>
-      <div class="card">
-        <h3 data-i18n="f5_t">Web o escritorio</h3>
-        <p data-i18n="f5_d">El mismo código corre en el navegador o como app nativa. En escritorio abre y guarda el archivo real en su sitio.</p>
-      </div>
-      <div class="card">
-        <h3 data-i18n="f6_t">Auditable</h3>
-        <p data-i18n="f6_d">Código abierto, sin frameworks ni CDN externos. Verifica cada descarga con su hash SHA-256 publicado.</p>
-      </div>
+    <div class="features">
+      <div class="feature"><span class="fnum mono">01</span><span class="fi" data-ico="lock"></span><h3 data-i18n="f1_t">Encrypted &amp; offline</h3><p data-i18n="f1_d">AES-256-GCM, key derived with Argon2id. The vault file stays on your device.</p></div>
+      <div class="feature"><span class="fnum mono">02</span><span class="fi" data-ico="grid"></span><h3 data-i18n="f2_t">Built for API keys</h3><p data-i18n="f2_d">Group by service, project and environment. Attach files. Search instantly.</p></div>
+      <div class="feature"><span class="fnum mono">03</span><span class="fi" data-ico="timer"></span><h3 data-i18n="f3_t">Clipboard auto-clear</h3><p data-i18n="f3_d">KeePassXC-style: copies wipe from the clipboard after a few seconds.</p></div>
+      <div class="feature"><span class="fnum mono">04</span><span class="fi" data-ico="apple"></span><h3 data-i18n="f4_t">Signed &amp; notarized</h3><p data-i18n="f4_d">Developer-ID signed and Apple-notarized, opens with no scary warnings.</p></div>
+      <div class="feature"><span class="fnum mono">05</span><span class="fi" data-ico="layers"></span><h3 data-i18n="f5_t">Web or desktop</h3><p data-i18n="f5_d">Same code in the browser or as a native app that saves the real file.</p></div>
+      <div class="feature"><span class="fnum mono">06</span><span class="fi" data-ico="github"></span><h3 data-i18n="f6_t">Auditable</h3><p data-i18n="f6_d">Open source, no frameworks or CDNs. Verify each download with its SHA-256.</p></div>
     </div>
   </section>
 
-  <section id="security" class="security">
-    <h2 data-i18n="sec_title">Honestos sobre qué protege (y qué no)</h2>
-    <div class="sec-cols">
-      <div class="sec-ok">
-        <h3 data-i18n="sec_ok_t">✓ Qué protege</h3>
-        <ul>
-          <li data-i18n="sec_ok_1">Si alguien obtiene tu archivo de bóveda, no puede leer las keys sin tu contraseña maestra.</li>
-          <li data-i18n="sec_ok_2">Si manipulan el archivo, el descifrado falla (no se abre silenciosamente alterado).</li>
-          <li data-i18n="sec_ok_3">Nada se transmite por la red: puedes usarlo sin conexión.</li>
-        </ul>
-      </div>
-      <div class="sec-no">
-        <h3 data-i18n="sec_no_t">✗ Qué NO protege</h3>
-        <ul>
-          <li data-i18n="sec_no_1">Un dispositivo comprometido (malware, keylogger, extensión maliciosa) puede leer las keys mientras la bóveda está abierta. Ninguna app puede evitar esto.</li>
-          <li data-i18n="sec_no_2">Una contraseña maestra débil es vulnerable a fuerza bruta. Usa una larga.</li>
-        </ul>
+  <section class="ops" aria-label="ApiPass preview">
+    <div class="ops-head">
+      <span class="ops-label"><span data-ico="lock"></span> <span data-i18n="preview_label">Vault preview</span></span>
+      <span class="ops-stat" data-scramble>AES-256</span>
+    </div>
+    <div class="panel" id="vault">
+      <div class="panel-head"><span class="dot"></span> ApiPass <span class="right">● UNLOCKED</span></div>
+      <div class="panel-body">
+        <div class="vault-row"><span class="vico" data-ico="key"></span><span class="vk"><span class="svc">OpenAI</span><span class="env">project · aurora / prod</span></span><span class="vv">••••••••</span><span class="vcopy"><span data-ico="copy"></span></span></div>
+        <div class="vault-row"><span class="vico" data-ico="key"></span><span class="vk"><span class="svc">Stripe</span><span class="env">project · ledger / staging</span></span><span class="vv">••••••••</span><span class="vcopy"><span data-ico="copy"></span></span></div>
+        <div class="vault-row"><span class="vico" data-ico="key"></span><span class="vk"><span class="svc">Mapbox</span><span class="env">project · atlas / dev</span><span class="vault-bar"><i></i></span></span><span class="vcopy vcopy-on"><span data-ico="timer"></span> <span data-i18n="copied_4s">copied · 4s</span></span></div>
       </div>
     </div>
-    <p class="verify">
-      <span data-i18n="verify">Verifica tu descarga:</span>
-      <code>shasum -a 256 ApiPass-macOS.dmg</code>
-      <a href="https://github.com/luisassardo/apipass/releases/latest" rel="noopener" data-i18n="verify_link">y compara con SHA256SUMS.txt</a>
-    </p>
+    <div class="trust">
+      <div class="ok">
+        <h4><span data-ico="verify"></span> <span data-i18n="protects">Protects</span></h4>
+        <ul><li data-i18n="prot_1">A stolen vault file is unreadable without your master password.</li><li data-i18n="prot_2">Tampering makes decryption fail, never opens silently altered.</li><li data-i18n="prot_3">Nothing crosses the network; works fully offline.</li></ul>
+      </div>
+      <div class="no">
+        <h4><span data-ico="eye"></span> <span data-i18n="doesnt">Doesn't</span></h4>
+        <ul><li data-i18n="no_1">A compromised device (malware, keylogger) while the vault is open.</li><li data-i18n="no_2">A weak master password against brute force, use a long one.</li></ul>
+      </div>
+    </div>
   </section>
 </main>
 
-<footer class="site-footer">
-  <p>
-    <span data-i18n="footer">Esta herramienta es parte de</span>
-    <a href="https://c-lab.tools/" rel="noopener" class="clab">C-LAB</a> ·
-    <span data-i18n="for_audience">Creada para periodistas y defensores de derechos humanos.</span>
-  </p>
-  <p class="foot-links">
-    <a href="https://github.com/luisassardo/apipass" rel="noopener">GitHub</a> ·
-    <a href="/app/" data-i18n="cta_browser">Usar en el navegador</a>
-  </p>
+<footer class="rail">
+  <nav class="netnav" aria-label="Node network">
+    <a class="node" href="https://argusdn.org/" rel="noopener"><span class="dotmark"></span> ARGUS</a>
+    <a class="node" href="https://c-lab.tools/" rel="noopener"><span class="dotmark"></span> C-LAB</a>
+    <a class="node live" href="https://hashcheck.c-lab.tools/" rel="noopener"><span class="dotmark"></span> HASHCHECK</a>
+    <span class="node active"><span class="dotmark"></span> APIPASS</span>
+  </nav>
+  <div class="info">
+    <a href="https://github.com/luisassardo/apipass" rel="noopener">GitHub</a>
+    <a href="mailto:luis@argusdn.org">luis@argusdn.org</a>
+    <span class="hide-narrow">© 2026 · ARGUS</span>
+  </div>
 </footer>
 
+<script src="icons.js"></script>
+<script src="node.js"></script>
 <script src="site.js"></script>
 </body>
 </html>
