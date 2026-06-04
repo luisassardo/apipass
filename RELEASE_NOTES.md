@@ -1,20 +1,18 @@
-**ApiPass v0.4.0 — attachments, settings, and a hardening pass.**
+**ApiPass v0.5.0 — new ARGUS design.**
 
-Universal build: runs natively on **Intel and Apple Silicon** Macs. Signed + notarized by Apple — opens with no warning. Or use it in the browser at **https://apipass.c-lab.tools**.
+ApiPass now wears the shared **ARGUS / C-LAB** design: a tactical dark theme with Space Grotesk + IBM Plex Mono, matching [hashcheck.c-lab.tools](https://hashcheck.c-lab.tools) and [apipass.c-lab.tools](https://apipass.c-lab.tools). Same vault, same crypto, new look.
+
+Universal build: runs natively on **Intel and Apple Silicon** Macs. Signed + notarized by Apple, opens with no warning. Or use it in the browser at **https://apipass.c-lab.tools**.
 
 ### New
-- **Touch ID unlock** — unlock a vault with Touch ID (the master password is kept in the macOS Keychain, gated by Touch ID; login-password fallback). Per-vault, enabled in Settings.
-- **Attachments** — keep certificates, service-account JSON and key files with each entry, encrypted inside the vault (1 MB/file).
-- **Settings (⚙)** — clipboard auto-clear time, idle auto-lock, encryption strength (Argon2id Fast/Balanced/Strong), rotation threshold, language.
-- **Change master password** — re-keys the whole vault.
-- **Rotation reminders** — flags keys you haven't rotated in a while.
-- **`.env` import/export**, **passphrase generator**, **password-strength meter**.
-- **Keyboard:** `⌘/Ctrl+L` lock · `/` search · `Esc` close.
-- Refreshed visual design with subtle, accessible motion.
+- **Redesigned interface** — the ARGUS node design system: dark tactical theme, corner chrome, live UTC clock, vendored fonts (no CDN, fully offline).
+- **Two-column lock screen** — the ApiPass identity beside the unlock / create panel, so the vault controls stay on the first screen. Collapses cleanly on small windows and phones (tool first).
+- Fonts and styles are served from the app itself; nothing loads from the network.
 
-### Hardened
-- Argon2id key derivation (old PBKDF2 vaults still open).
-- Clipboard is wiped when you lock; revealed secrets auto re-mask after 30s.
+### Unchanged
+- AES-256-GCM with an Argon2id-derived key. Old vaults open as before.
+- Touch ID unlock, attachments, settings, `.env` import/export, rotation reminders, clipboard auto-clear, idle auto-lock.
+- 100% offline. No server, no telemetry, no cloud.
 
 ### Verify your download
 ```

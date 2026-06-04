@@ -3,7 +3,20 @@
 All notable changes to ApiPass. Dates are when the work landed on `main`
 (the web build deploys continuously; desktop versions are tagged releases).
 
-## [0.4.0] — unreleased (desktop); live on web
+## [0.5.0] — 2026-06-05
+
+### Changed
+- **New ARGUS design.** Adopted the shared ARGUS / C-LAB node design system
+  (tactical dark theme, Space Grotesk + IBM Plex Mono, corner chrome, live UTC
+  clock), matching hashcheck.c-lab.tools and the apipass landing. Same vault,
+  same crypto, same functional IDs and flows.
+- **Two-column lock screen** — identity hero beside the unlock / create panel,
+  so the controls stay above the fold. Stays two-column down to 700px; on
+  phones it stacks with the tool first.
+- Fonts vendored locally (woff2, latin); nothing loads from a CDN. CSP-safe
+  (no inline styles or scripts).
+
+## [0.4.0] — 2026-06-04
 
 ### Added
 - **Attachments** — per-entry files (certificates, service-account JSON, keys),
