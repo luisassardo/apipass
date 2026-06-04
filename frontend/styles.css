@@ -19,14 +19,13 @@
 .vault-stats, .entry-meta, .attach-size, .entry-attach, .tag, .icon-btn, #pw-strength-label { font-variant-numeric: tabular-nums; }
 
 /* ============================ APP SHELL ============================ */
-/* override node.css landing grid: the app is a single centered column */
+/* override node.css landing grid: each screen controls its own layout.
+   Lock screen = wide ARGUS hero (like the landing); vault = centered column. */
 main {
   display: block;
-  max-width: 880px;
-  width: 100%;
-  margin: 0 auto;
-  padding: clamp(28px, 4vw, 56px) var(--gutter-x) 80px;
+  padding: clamp(36px, 5vw, 80px) var(--gutter-x) clamp(40px, 5vw, 72px);
 }
+.vault-screen { max-width: 860px; margin: 0 auto; }
 
 h2 {
   font-family: "Space Grotesk", sans-serif;
@@ -94,7 +93,18 @@ textarea.text-input { resize: vertical; }
 .form-error { color: var(--err); font-size: 13px; min-height: 1.2rem; margin: 12px 0 0; font-family: "IBM Plex Mono", monospace; }
 
 /* ============================ LOCK SCREEN ============================ */
-.lock-screen { max-width: 460px; margin: 0 auto; }
+/* two-column ARGUS hero: identity (wordmark) + ops panel (unlock/create) */
+.lock-screen {
+  display: grid;
+  grid-template-columns: 1.18fr 1fr;
+  gap: clamp(28px, 5vw, 68px);
+  align-items: center;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+@media (max-width: 900px) {
+  .lock-screen { grid-template-columns: 1fr; gap: 34px; align-items: stretch; }
+}
 
 .lock-tabs { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
 .lock-tab {

@@ -18,6 +18,7 @@
   <div class="bg-glow"></div>
   <div class="bg-scan"></div>
   <div class="bg-motes"></div>
+  <div class="bg-sweep"></div>
 </div>
 
 <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br brr"></span>
@@ -40,6 +41,22 @@
 <main>
   <!-- ============ LOCK SCREEN ============ -->
   <section id="lock-screen" class="lock-screen">
+   <div class="identity">
+     <p class="eyebrow"><span class="ln"></span><span data-ico="key"></span> <span data-i18n="eyebrow">C-LAB · Tool · encrypted vault</span></p>
+     <h1 class="wordmark product"><span data-decode>Api</span><span class="accent" data-decode>Pass</span></h1>
+     <p class="role" data-i18n="role">Offline vault · open source · KeePassXC-inspired</p>
+     <h2 class="title" data-i18n="lock_tagline">Your API keys, encrypted and under your control.</h2>
+     <p class="desc" data-i18n="lock_lead">An encrypted vault to store and organize your API keys. It runs 100% on your device, no server, no telemetry, no cloud.</p>
+   </div>
+
+   <div class="ops">
+    <div class="ops-head">
+      <span class="ops-label"><span data-ico="lock"></span> <span data-i18n="unlock_label">Open / create vault</span></span>
+      <span class="ops-stat">AES-256-GCM</span>
+    </div>
+    <div class="panel">
+     <div class="panel-head"><span class="dot"></span> ApiPass <span class="right">● LOCKED</span></div>
+     <div class="panel-body">
     <div class="lock-tabs" role="tablist">
       <button type="button" id="tab-open" class="lock-tab active" data-i18n="open_vault">Abrir bóveda</button>
       <button type="button" id="tab-create" class="lock-tab" data-i18n="create_vault">Crear bóveda</button>
@@ -77,11 +94,14 @@
       <button id="create-btn" class="btn btn-primary" disabled data-i18n="create_open">Crear y abrir</button>
       <p id="create-error" class="form-error"></p>
     </div>
+     </div><!-- /panel-body -->
+    </div><!-- /panel -->
 
     <details class="about">
       <summary data-i18n="about_summary">¿Cómo funciona y qué protege (y qué no)?</summary>
       <div data-i18n="about_body"></div>
     </details>
+   </div><!-- /ops -->
   </section>
 
   <!-- ============ VAULT (unlocked) ============ -->
