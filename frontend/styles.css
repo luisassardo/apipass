@@ -411,6 +411,9 @@ textarea.text-input { resize: vertical; }
   cursor: pointer;
 }
 .set-check input { width: auto; }
+.set-divider { border: 0; border-top: 1px solid var(--border); margin: 1.25rem 0 0.25rem; }
+.chpw-second { margin-top: 0.4rem; }
+.chpw-btn { margin-top: 0.6rem; }
 
 /* attachment indicator on entry cards */
 .entry-attach {

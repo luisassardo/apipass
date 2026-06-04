@@ -180,6 +180,15 @@
       <option value="0" data-i18n="set_off">Nunca</option>
     </select>
 
+    <div id="change-pw-section" class="hidden">
+      <hr class="set-divider">
+      <label class="field-label" data-i18n="set_change_pw">Cambiar contraseña maestra</label>
+      <input type="password" id="chpw-new" class="text-input" autocomplete="off" spellcheck="false" data-i18n-ph="set_new_pw" placeholder="Nueva contraseña">
+      <input type="password" id="chpw-confirm" class="text-input chpw-second" autocomplete="off" spellcheck="false" data-i18n-ph="set_confirm_pw" placeholder="Confirmar">
+      <button id="chpw-btn" class="btn btn-sm chpw-btn" data-i18n="set_change_btn">Cambiar y guardar</button>
+      <p id="chpw-msg" class="attach-note"></p>
+    </div>
+
     <div class="modal-actions">
       <button id="settings-close" class="btn btn-primary" data-i18n="set_done">Listo</button>
     </div>

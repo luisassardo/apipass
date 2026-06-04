@@ -127,7 +127,10 @@
       env_import_done: 'Se importaron {n} keys desde el archivo .env.',
       env_export_warn: 'Se exportará un archivo .env SIN cifrar con tus secretos. ¿Continuar?',
       stat_key: 'key', stat_keys: 'keys', stat_to_rotate: 'para rotar',
-      filter_by: 'Filtrar por:'
+      filter_by: 'Filtrar por:',
+      set_change_pw: 'Cambiar contraseña maestra', set_new_pw: 'Nueva contraseña',
+      set_confirm_pw: 'Confirmar', set_change_btn: 'Cambiar y guardar',
+      set_pw_changed: '✓ Contraseña cambiada. Guarda/descarga la bóveda actualizada.'
     },
     en: {
       title: 'ApiPass',
@@ -218,7 +221,10 @@
       env_import_done: 'Imported {n} keys from the .env file.',
       env_export_warn: 'This exports an UNENCRYPTED .env file with your secrets. Continue?',
       stat_key: 'key', stat_keys: 'keys', stat_to_rotate: 'to rotate',
-      filter_by: 'Filter by:'
+      filter_by: 'Filter by:',
+      set_change_pw: 'Change master password', set_new_pw: 'New password',
+      set_confirm_pw: 'Confirm', set_change_btn: 'Change & save',
+      set_pw_changed: '✓ Password changed. Save/download the updated vault.'
     }
   };
 
@@ -707,12 +713,16 @@
 
     const revealBtn = el('button', 'icon-btn', t('reveal'));
     let revealed = false;
-    revealBtn.addEventListener('click', () => {
-      revealed = !revealed;
-      secret.textContent = revealed ? (entry.secret || '') : masked;
-      secret.classList.toggle('revealed', revealed);
-      revealBtn.textContent = revealed ? t('hide') : t('reveal');
-    });
+    let revealTimer = null;
+    const setRevealed = v => {
+      revealed = v;
+      secret.textContent = v ? (entry.secret || '') : masked;
+      secret.classList.toggle('revealed', v);
+      revealBtn.textContent = v ? t('hide') : t('reveal');
+      if (revealTimer) { clearTimeout(revealTimer); revealTimer = null; }
+      if (v) revealTimer = setTimeout(() => setRevealed(false), 30000); // auto re-mask after 30s
+    };
+    revealBtn.addEventListener('click', () => setRevealed(!revealed));
     secretRow.appendChild(revealBtn);
 
     const copyBtn = el('button', 'icon-btn', t('copy'));
@@ -1036,8 +1046,27 @@
     $('#set-blur').checked = !!settings.lockOnBlur;
     $('#set-strength').value = settings.strength;
     $('#set-stale').value = String(settings.staleDays);
+    // "Change master password" only makes sense while a vault is open.
+    $('#change-pw-section').classList.toggle('hidden', !vault);
+    $('#chpw-new').value = ''; $('#chpw-confirm').value = ''; $('#chpw-msg').textContent = '';
     $('#settings-overlay').classList.remove('hidden');
   }
+
+  // Change the vault's master password: update the in-memory key and re-encrypt
+  // (a fresh salt is generated on every save, so this fully re-keys the file).
+  $('#chpw-btn').addEventListener('click', async () => {
+    const pw = $('#chpw-new').value, pw2 = $('#chpw-confirm').value;
+    const msg = $('#chpw-msg');
+    msg.style.color = 'var(--err)';
+    if (pw.length < 8) { msg.textContent = t('err_pw_short'); return; }
+    if (pw !== pw2) { msg.textContent = t('err_pw_match'); return; }
+    masterPassword = pw;
+    setDirty(true);
+    $('#chpw-new').value = ''; $('#chpw-confirm').value = '';
+    await saveVault();          // persist immediately with the new password
+    msg.style.color = 'var(--ok)';
+    msg.textContent = t('set_pw_changed');
+  });
 
   // Apply + persist on every change (no separate save step).
   $('#set-clipboard').addEventListener('change', e => { settings.clipboardSeconds = parseInt(e.target.value, 10); saveSettings(); });
