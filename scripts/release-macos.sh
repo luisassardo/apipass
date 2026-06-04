@@ -30,11 +30,15 @@ echo "==> Building + signing + notarizing the universal app…"
 npx tauri build --target universal-apple-darwin   # APPLE_* env → tauri notarizes + staples the .app
 
 echo "==> Notarizing + stapling the .dmg (retries for flaky uploads)…"
+# Note: capture to a file then grep it — piping notarytool into `grep -q` under
+# `set -o pipefail` misreads success as failure (grep closes the pipe early →
+# SIGPIPE → non-zero pipeline status even though the status WAS Accepted).
 ok=0
 for a in 1 2 3 4 5; do
-  if xcrun notarytool submit "$DMG" \
-        --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" \
-        --wait 2>&1 | tee /tmp/apipass-notary.log | grep -q "status: Accepted"; then ok=1; break; fi
+  xcrun notarytool submit "$DMG" \
+    --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" \
+    --wait > /tmp/apipass-notary.log 2>&1 || true
+  if grep -q "status: Accepted" /tmp/apipass-notary.log; then ok=1; break; fi
   echo "   notary retry ${a}…"; sleep 4
 done
 [ "$ok" = 1 ] || { echo "Notarization failed after retries — see /tmp/apipass-notary.log"; exit 1; }
