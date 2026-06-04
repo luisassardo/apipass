@@ -660,14 +660,18 @@
 
   function renderStats() {
     const total = vault.entries.length;
-    const stale = settings.staleDays > 0
-      ? vault.entries.filter(e => { const a = keyAgeDays(e); return a !== null && a >= settings.staleDays; }).length
-      : 0;
+    let stale = 0, attachBytes = 0;
+    vault.entries.forEach(e => {
+      if (settings.staleDays > 0) { const a = keyAgeDays(e); if (a !== null && a >= settings.staleDays) stale++; }
+      (e.attachments || []).forEach(a => { attachBytes += a.size || 0; });
+    });
     const stats = $('#vault-stats');
     if (!total) { stats.textContent = ''; return; }
     let txt = total + ' ' + (total === 1 ? t('stat_key') : t('stat_keys'));
     if (stale > 0) txt += ' · ⚠ ' + stale + ' ' + t('stat_to_rotate');
+    if (attachBytes > 0) txt += ' · 📎 ' + fmtBytes(attachBytes);
     stats.textContent = txt;
+    stats.classList.toggle('big', attachBytes > 8 * 1024 * 1024); // warn past ~8 MB of attachments
   }
 
   function el(tag, cls, text) {
@@ -1019,6 +1023,15 @@
     if (e.key === 'Escape') {
       if (!$('#editor-overlay').classList.contains('hidden')) closeEditor();
       else if (!$('#settings-overlay').classList.contains('hidden')) $('#settings-overlay').classList.add('hidden');
+      return;
+    }
+    // Cmd/Ctrl+L → lock immediately.
+    if (vault && (e.metaKey || e.ctrlKey) && (e.key === 'l' || e.key === 'L')) {
+      e.preventDefault(); lockVault(false); return;
+    }
+    // "/" focuses search (unless typing in a field).
+    if (vault && e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+      e.preventDefault(); $('#search').focus();
     }
   });
   // Enter on the create-vault fields submits.
