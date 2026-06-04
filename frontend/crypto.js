@@ -100,13 +100,15 @@
 
   // ---------- encrypt / decrypt ----------
 
-  // vaultObj -> envelope (always Argon2id).
-  async function encryptVault(vaultObj, password) {
+  // vaultObj -> envelope (always Argon2id). Optional params override the default
+  // Argon2 cost (the "encryption strength" setting). { m, t, p } in KiB/passes/lanes.
+  async function encryptVault(vaultObj, password, params) {
     if (!password) throw new Error('EMPTY_PASSWORD');
+    const p = params && params.m && params.t && params.p ? params : ARGON2;
     const salt = randomBytes(SALT_BYTES);
     const iv = randomBytes(IV_BYTES);
-    const kdf = { algo: ARGON2.algo, m: ARGON2.m, t: ARGON2.t, p: ARGON2.p, salt: bytesToB64(salt) };
-    const key = await deriveKeyArgon2(password, salt, ARGON2);
+    const kdf = { algo: 'argon2id', m: p.m, t: p.t, p: p.p, salt: bytesToB64(salt) };
+    const key = await deriveKeyArgon2(password, salt, p);
     const plaintext = enc.encode(JSON.stringify(vaultObj));
     const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, plaintext);
     return {

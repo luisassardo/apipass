@@ -16,6 +16,7 @@
   </div>
   <div class="header-right">
     <button type="button" id="lock-btn" class="btn lock-btn hidden" data-i18n="lock">Bloquear</button>
+    <button type="button" id="settings-btn" class="btn lock-btn" title="Settings" aria-label="Settings">⚙</button>
     <div class="lang-switch" role="group" aria-label="Language">
       <button type="button" data-lang="es" class="active">ES</button>
       <button type="button" data-lang="en">EN</button>
@@ -122,6 +123,47 @@
     <div class="modal-actions">
       <button id="editor-cancel" class="btn" data-i18n="cancel">Cancelar</button>
       <button id="editor-save" class="btn btn-primary" data-i18n="save_entry">Guardar key</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS (modal) ============ -->
+<div id="settings-overlay" class="overlay hidden">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2 data-i18n="settings_title">Configuración</h2>
+
+    <label class="field-label" data-i18n="set_clipboard">Borrar portapapeles tras copiar</label>
+    <select id="set-clipboard" class="text-input">
+      <option value="5">5 s</option>
+      <option value="10">10 s</option>
+      <option value="20">20 s</option>
+      <option value="60">60 s</option>
+      <option value="0" data-i18n="set_off">Nunca</option>
+    </select>
+
+    <label class="field-label" data-i18n="set_idle">Bloqueo automático por inactividad</label>
+    <select id="set-idle" class="text-input">
+      <option value="1" data-i18n="set_min1">1 minuto</option>
+      <option value="5" data-i18n="set_min5">5 minutos</option>
+      <option value="15" data-i18n="set_min15">15 minutos</option>
+      <option value="0" data-i18n="set_off">Nunca</option>
+    </select>
+
+    <label class="set-check">
+      <input type="checkbox" id="set-blur">
+      <span data-i18n="set_blur">Bloquear al cambiar de pestaña o ventana</span>
+    </label>
+
+    <label class="field-label" data-i18n="set_strength">Fuerza de cifrado (Argon2id)</label>
+    <select id="set-strength" class="text-input">
+      <option value="fast" data-i18n="set_fast">Rápida (19 MiB)</option>
+      <option value="balanced" data-i18n="set_balanced">Equilibrada (64 MiB)</option>
+      <option value="strong" data-i18n="set_strong">Fuerte (128 MiB, más lento)</option>
+    </select>
+    <p class="attach-note" data-i18n="set_strength_note">Se aplica al guardar. Mayor fuerza = más difícil de romper, pero el desbloqueo tarda más.</p>
+
+    <div class="modal-actions">
+      <button id="settings-close" class="btn btn-primary" data-i18n="set_done">Listo</button>
     </div>
   </div>
 </div>

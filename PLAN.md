@@ -103,6 +103,9 @@ Plaintext (encrypted as the `ciphertext`) is the vault object:
 - **Save:** re-encrypts and downloads the `.apikeys` file (the user replaces their copy).
 - **Auto-lock:** idle timeout + on tab blur; explicit Lock button.
 - **Bilingual:** ES / EN (matches hash-checker).
+- **Settings (⚙):** device-level prefs in `localStorage` (never secrets) — clipboard
+  auto-clear time, idle auto-lock time, lock-on-blur toggle, encryption strength
+  (Fast/Balanced/Strong Argon2id profile), remembered language.
 
 ## File layout
 

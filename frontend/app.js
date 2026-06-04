@@ -6,9 +6,30 @@
   'use strict';
 
   const CRYPTO = window.ApiPassCrypto;
-  const CLIPBOARD_CLEAR_SECONDS = 20; // wipe clipboard N seconds after a copy (KeePassXC-style)
-  const IDLE_LOCK_MS = 5 * 60 * 1000; // auto-lock after 5 min idle
   const MAX_ATTACH_BYTES = 1024 * 1024; // 1 MB per attachment
+
+  // Argon2id "encryption strength" profiles (the settings selector). Params are
+  // stored per-vault in the envelope, so changing this never breaks old files.
+  const STRENGTH = {
+    fast:     { m: 19456,  t: 2, p: 1 }, // 19 MiB  (~0.25s)
+    balanced: { m: 65536,  t: 2, p: 1 }, // 64 MiB  (~0.8s)  — default
+    strong:   { m: 131072, t: 3, p: 1 }  // 128 MiB (~2.5s)
+  };
+
+  // Device-level preferences (localStorage; never secrets). Loaded at startup.
+  const SETTINGS_KEY = 'apipass.settings';
+  const DEFAULT_SETTINGS = { clipboardSeconds: 20, idleMinutes: 5, lockOnBlur: true, strength: 'balanced', lang: 'es' };
+  let settings = loadSettings();
+
+  function loadSettings() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      return Object.assign({}, DEFAULT_SETTINGS, s);
+    } catch (_) { return Object.assign({}, DEFAULT_SETTINGS); }
+  }
+  function saveSettings() {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) {}
+  }
 
   // Desktop (Tauri) detection. When present, we use native open/save so the app
   // reads and writes the real .apikeys file in place instead of downloading copies.
@@ -84,7 +105,17 @@
       attach_remove: 'Quitar',
       attach_too_big: 'supera el límite de 1 MB y no se adjuntó.',
       attach_export_warn: 'Este archivo se guardará SIN cifrar en tu disco. ¿Continuar?',
-      attach_saved: 'Archivo guardado.'
+      attach_saved: 'Archivo guardado.',
+      settings_title: 'Configuración',
+      set_clipboard: 'Borrar portapapeles tras copiar',
+      set_idle: 'Bloqueo automático por inactividad',
+      set_blur: 'Bloquear al cambiar de pestaña o ventana',
+      set_strength: 'Fuerza de cifrado (Argon2id)',
+      set_strength_note: 'Se aplica al guardar. Mayor fuerza = más difícil de romper, pero el desbloqueo tarda más.',
+      set_done: 'Listo',
+      set_off: 'Nunca',
+      set_min1: '1 minuto', set_min5: '5 minutos', set_min15: '15 minutos',
+      set_fast: 'Rápida (19 MiB)', set_balanced: 'Equilibrada (64 MiB)', set_strong: 'Fuerte (128 MiB, más lento)'
     },
     en: {
       title: 'ApiPass',
@@ -153,7 +184,17 @@
       attach_remove: 'Remove',
       attach_too_big: 'exceeds the 1 MB limit and was not attached.',
       attach_export_warn: 'This file will be saved UNENCRYPTED to your disk. Continue?',
-      attach_saved: 'File saved.'
+      attach_saved: 'File saved.',
+      settings_title: 'Settings',
+      set_clipboard: 'Clear clipboard after copy',
+      set_idle: 'Auto-lock when idle',
+      set_blur: 'Lock when switching tab or window',
+      set_strength: 'Encryption strength (Argon2id)',
+      set_strength_note: 'Applied on save. Stronger = harder to crack, but unlocking takes longer.',
+      set_done: 'Done',
+      set_off: 'Never',
+      set_min1: '1 minute', set_min5: '5 minutes', set_min15: '15 minutes',
+      set_fast: 'Fast (19 MiB)', set_balanced: 'Balanced (64 MiB)', set_strong: 'Strong (128 MiB, slower)'
     }
   };
 
@@ -164,8 +205,8 @@
       <p class="danger"><strong>Qué NO protege:</strong> si tu dispositivo está comprometido (malware, keylogger, extensión maliciosa del navegador), nada puede proteger las keys mientras la bóveda está abierta. Ninguna app web puede. Mientras está desbloqueada, las keys viven en la memoria del navegador.</p>
       <ul>
         <li>El archivo de bóveda es tuyo: guárdalo donde decidas (USB, nube cifrada). ApiPass nunca lo almacena ni lo envía.</li>
-        <li>La copia al portapapeles se borra automáticamente a los 20 segundos.</li>
-        <li>La bóveda se bloquea sola tras 5 minutos de inactividad o al cambiar de pestaña.</li>
+        <li>La copia al portapapeles se borra automáticamente (tiempo configurable en ⚙ Configuración).</li>
+        <li>La bóveda se bloquea sola tras un tiempo de inactividad y al cambiar de pestaña (configurable).</li>
         <li>Verifícalo: abre DevTools → Red → no hay peticiones. El código es HTML/JS/CSS estático y auditable.</li>
       </ul>
     `,
@@ -175,8 +216,8 @@
       <p class="danger"><strong>What it does NOT protect:</strong> if your device is compromised (malware, keylogger, malicious browser extension), nothing can protect the keys while the vault is open. No web app can. While unlocked, the keys live in browser memory.</p>
       <ul>
         <li>The vault file is yours: keep it wherever you decide (USB, encrypted cloud). ApiPass never stores or sends it.</li>
-        <li>Clipboard copies are wiped automatically after 20 seconds.</li>
-        <li>The vault auto-locks after 5 minutes idle or when you switch tabs.</li>
+        <li>Clipboard copies are wiped automatically (timeout configurable in ⚙ Settings).</li>
+        <li>The vault auto-locks after an idle timeout and when you switch tabs (configurable).</li>
         <li>Verify it: open DevTools → Network → no requests. The code is static, auditable HTML/JS/CSS.</li>
       </ul>
     `
@@ -204,7 +245,7 @@
   }
 
   document.querySelectorAll('.lang-switch button').forEach(b => {
-    b.addEventListener('click', () => applyLang(b.dataset.lang));
+    b.addEventListener('click', () => { applyLang(b.dataset.lang); settings.lang = b.dataset.lang; saveSettings(); });
   });
 
   // ---------- state ----------
@@ -455,14 +496,14 @@
   // ---------- auto-lock ----------
   function resetIdleTimer() {
     if (idleTimer) clearTimeout(idleTimer);
-    if (!vault) return;
-    idleTimer = setTimeout(() => lockVault(true), IDLE_LOCK_MS);
+    if (!vault || settings.idleMinutes <= 0) return; // 0 = never auto-lock
+    idleTimer = setTimeout(() => lockVault(true), settings.idleMinutes * 60 * 1000);
   }
   ['mousemove', 'keydown', 'click', 'input'].forEach(ev =>
     document.addEventListener(ev, () => { if (vault) resetIdleTimer(); }, { passive: true })
   );
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && vault) lockVault(true);
+    if (document.hidden && vault && settings.lockOnBlur) lockVault(true);
   });
 
   // ---------- clipboard ----------
@@ -498,9 +539,14 @@
     clearClipboardTimer(); // reset any prior countdown
     activeCopyBtn = btn;
     btn.classList.add('ok');
-    btn.title = t('clip_title');
     btn.textContent = t('copied');
-    let remaining = CLIPBOARD_CLEAR_SECONDS;
+    const secs = settings.clipboardSeconds;
+    if (secs <= 0) { // auto-clear disabled — just show confirmation briefly
+      clipboardTimer = setTimeout(() => clearClipboardTimer(), 1500);
+      return;
+    }
+    btn.title = t('clip_title');
+    let remaining = secs;
     // Show "Copied ✓" briefly, then tick the countdown down to 0 and wipe.
     clipboardTimer = setTimeout(() => {
       btn.textContent = remaining + 's';
@@ -767,7 +813,7 @@
     setBtnBusy(btn, t('saving'));
     try {
       vault.meta.modified = nowISO();
-      const envelope = await CRYPTO.encryptVault(vault, masterPassword);
+      const envelope = await CRYPTO.encryptVault(vault, masterPassword, STRENGTH[settings.strength]);
       const text = JSON.stringify(envelope, null, 2);
 
       if (IS_TAURI) {
@@ -810,6 +856,30 @@
     if (dirty) { e.preventDefault(); e.returnValue = ''; }
   });
 
+  // ---------- settings modal ----------
+  $('#settings-btn').addEventListener('click', openSettings);
+  $('#settings-close').addEventListener('click', () => $('#settings-overlay').classList.add('hidden'));
+  $('#settings-overlay').addEventListener('click', e => {
+    if (e.target === $('#settings-overlay')) $('#settings-overlay').classList.add('hidden');
+  });
+
+  function openSettings() {
+    $('#set-clipboard').value = String(settings.clipboardSeconds);
+    $('#set-idle').value = String(settings.idleMinutes);
+    $('#set-blur').checked = !!settings.lockOnBlur;
+    $('#set-strength').value = settings.strength;
+    $('#settings-overlay').classList.remove('hidden');
+  }
+
+  // Apply + persist on every change (no separate save step).
+  $('#set-clipboard').addEventListener('change', e => { settings.clipboardSeconds = parseInt(e.target.value, 10); saveSettings(); });
+  $('#set-idle').addEventListener('change', e => { settings.idleMinutes = parseInt(e.target.value, 10); saveSettings(); resetIdleTimer(); });
+  $('#set-blur').addEventListener('change', e => { settings.lockOnBlur = e.target.checked; saveSettings(); });
+  $('#set-strength').addEventListener('change', e => {
+    settings.strength = e.target.value; saveSettings();
+    if (vault) setDirty(true); // re-save to apply the new KDF strength
+  });
+
   // ---------- init ----------
-  applyLang('es');
+  applyLang(settings.lang);
 })();

@@ -6,3 +6,12 @@
   Permissions-Policy: interest-cohort=(), geolocation=(), camera=(), microphone=(), clipboard-read=(self), clipboard-write=(self)
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
+
+# Always revalidate code so a security update can't be masked by a stale cache.
+# (no-cache = use cache only after the server confirms it's unchanged → 304)
+/*.html
+  Cache-Control: no-cache
+/*.js
+  Cache-Control: no-cache
+/*.css
+  Cache-Control: no-cache

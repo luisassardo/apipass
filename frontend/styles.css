@@ -380,6 +380,17 @@ textarea.text-input { resize: vertical; }
 .attach-add { margin-top: 0.3rem; display: inline-block; }
 .attach-note { font-size: 0.75rem; color: var(--text-dim); margin: 0.5rem 0 0; }
 
+/* settings checkbox row */
+.set-check {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.set-check input { width: auto; }
+
 /* attachment indicator on entry cards */
 .entry-attach {
   font-size: 0.72rem;
