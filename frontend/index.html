@@ -16,11 +16,9 @@
   </div>
   <div class="header-right">
     <button type="button" id="lock-btn" class="btn lock-btn hidden" data-i18n="lock">Bloquear</button>
-    <button type="button" id="settings-btn" class="btn lock-btn" title="Settings" aria-label="Settings">⚙</button>
-    <div class="lang-switch" role="group" aria-label="Language">
-      <button type="button" data-lang="es" class="active">ES</button>
-      <button type="button" data-lang="en">EN</button>
-    </div>
+    <button type="button" id="settings-btn" class="icon-btn-square" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
   </div>
 </header>
 
@@ -141,6 +139,12 @@
 <div id="settings-overlay" class="overlay hidden">
   <div class="modal" role="dialog" aria-modal="true">
     <h2 data-i18n="settings_title">Configuración</h2>
+
+    <label class="field-label" data-i18n="set_language">Idioma</label>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-lang="es" class="active">ES</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
 
     <label class="field-label" data-i18n="set_clipboard">Borrar portapapeles tras copiar</label>
     <select id="set-clipboard" class="text-input">
