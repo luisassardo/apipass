@@ -977,6 +977,7 @@
         val = val.slice(1, -1);
       }
       if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) return; // not a valid env var name
+      if (!val) return; // skip empty placeholders
       vault.entries.push({
         id: genId(), service: key, label: '', secret: val,
         env: '', project: '', notes: t('env_imported_note'),

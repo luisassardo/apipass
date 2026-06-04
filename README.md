@@ -84,14 +84,28 @@ La contraseña maestra **no se puede recuperar**. Si la pierdes, pierdes las key
 
 `.apikeys` es un sobre JSON cifrado y versionado (ver [`PLAN.md`](PLAN.md)). El campo `version`/`kdf` permite endurecer el KDF en el futuro sin romper bóvedas antiguas.
 
-## Estado y roadmap
+## Funcionalidades
 
-- **v0.1 web** (actual) — bóveda cifrada, CRUD, búsqueda, copia con autoborrado, bloqueo automático, ES/EN.
-- **v0.1 escritorio** (actual) — shell Tauri 2.x sobre la misma UI; abrir/guardar nativo del `.apikeys`. macOS-first (firmable + notarizable con Apple Dev ID). Cripto sigue en JS (PBKDF2). Ver [`DESKTOP.md`](DESKTOP.md).
-- **v0.2** — KDF Argon2id (en la app, vía Rust; en web, WASM vendorizado); medidor de fuerza de contraseña; importar desde `.env`.
-- **v0.2 escritorio** — desbloqueo con Touch ID / Keychain; cripto en Rust.
-- **v0.3** — bundles Windows + Linux en CI; auto-updater firmado de Tauri; interop opcional KeePass KDBX (`kdbxweb`).
-- **futuro** — posible CLI hermana (`apikey run -- comando`) para perfiles desarrolladores, compartiendo el mismo formato de bóveda.
+- **Cifrado:** AES-256-GCM, clave derivada con **Argon2id** (resistente a memoria; vaults PBKDF2 antiguos siguen abriéndose).
+- **Organización:** servicio / etiqueta / entorno (dev·staging·prod) / proyecto / notas; búsqueda instantánea; clic en una etiqueta para filtrar.
+- **Archivos adjuntos:** certificados, JSON de cuenta de servicio, claves — cifrados dentro de la bóveda (máx. 1 MB/archivo).
+- **Copia segura:** cuenta atrás visible estilo KeePassXC; el portapapeles se borra solo (y al bloquear).
+- **Recordatorios de rotación:** aviso ⚠ para keys sin rotar pasado un umbral configurable.
+- **Generador de frase maestra** (diceware) y **medidor de fuerza** al crear la bóveda.
+- **Cambiar contraseña maestra**, secretos que se re-ocultan solos, bloqueo por inactividad / al cambiar de ventana.
+- **`.env` import/export.**
+- **Configuración (⚙):** tiempos de portapapeles/bloqueo, fuerza Argon2id, umbral de rotación, idioma.
+- **Atajos:** `Cmd/Ctrl+L` bloquear · `/` buscar · `Esc` cerrar · `Enter` enviar.
+- **Web o escritorio:** mismo código; la app de macOS (universal Intel + Apple Silicon) abre/guarda el archivo real en su sitio.
+
+Ver [`CHANGELOG.md`](CHANGELOG.md) para el historial de versiones.
+
+## Roadmap
+
+- Desbloqueo con **Touch ID / Keychain** (escritorio; cripto en Rust).
+- Bundles **Windows + Linux** y auto-updater firmado de Tauri.
+- Interop opcional **KeePass KDBX** (`kdbxweb`).
+- Posible **CLI hermana** (`apikey run -- comando`) compartiendo el formato de bóveda.
 
 ## Deploy a Cloudflare Pages
 
