@@ -2,7 +2,7 @@
 # Build → sign → notarize → publish a universal macOS release of ApiPass.
 #
 # Usage (the app-specific password never gets committed — it lives in your env):
-#   APPLE_ID="luisassardo@me.com" \
+#   APPLE_ID="your-apple-id@example.com" \
 #   APPLE_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 #   APPLE_TEAM_ID="LWSXUT3Y4S" \
 #   bash scripts/release-macos.sh
